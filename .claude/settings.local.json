@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:sakai.primevue.org)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
