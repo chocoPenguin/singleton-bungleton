@@ -1,7 +1,30 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api import groups, questions, resources, users, authors, question_sets, question_assignments
+from database import engine, Base
+from models import Group, Resource
 
-app = FastAPI(title="Education AI Service")
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Qraft",
+    description="Qraft (가칭)",
+    version="0.1.0",
+)
+
+# API routers
+app.include_router(authors.router, prefix="/api/authors", tags=["Authors"])
+app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(resources.router, prefix="/api/resources", tags=["Resources"])
+app.include_router(questions.router, prefix="/api/questions", tags=["Questions"])
+app.include_router(question_sets.router, prefix="/api/question_sets", tags=["QuestionSets"])
+app.include_router(question_assignments.router, prefix="/api/question_assignments", tags=["QuestionAssignments"])
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 # CORS 설정 (Vue와 연동을 위해 필수!)
 app.add_middleware(
