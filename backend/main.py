@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import groups, questions, resources, users, authors, question_sets, question_assignments
+from api import auth, groups, questions, resources, users, authors, question_sets, question_assignments
 from database import engine, Base
 from models import Group, Resource
 
@@ -14,6 +14,7 @@ app = FastAPI(
 )
 
 # API routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(authors.router, prefix="/api/authors", tags=["Authors"])
 app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
