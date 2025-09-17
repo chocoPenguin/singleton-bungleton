@@ -5,8 +5,12 @@ backend/env/
 backend/.venv/
 backend/.env/
 
+# Database
+backend/app.db
+
 # Python
-backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*.pyc
 backend/*.py[cod]
 backend/*$py.class
 backend/*.so
@@ -184,3 +188,5 @@ lerna-debug.log*
 TODO.md
 NOTES.md
 .personal/
+
+# ===== End of .gitignore =====
