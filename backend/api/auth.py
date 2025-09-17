@@ -6,7 +6,7 @@ from database import get_db
 from models.author import Author
 from security import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter()
 
 @router.post("/register")
 def register(email: str, password: str, name: str, db: Session = Depends(get_db)):
