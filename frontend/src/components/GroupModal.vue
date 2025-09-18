@@ -123,7 +123,7 @@ const resetForm = () => {
   groupData.value = {
     name: props.group?.name || '',
     language: props.group?.language || '',
-    memo: props.group?.memo || ''
+    memo: props.group?.memo || props.group?.description || ''
   };
   submitted.value = false;
 };

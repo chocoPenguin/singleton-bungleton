@@ -23,6 +23,9 @@
 
     <!-- Toast Messages -->
     <Toast />
+
+    <!-- Confirm Dialog -->
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -31,6 +34,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 import Sidebar from './components/Sidebar.vue';
 import AuthModal from './components/AuthModal.vue';
 
