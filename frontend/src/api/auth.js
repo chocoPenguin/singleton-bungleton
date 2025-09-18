@@ -2,7 +2,13 @@ import axios from '../utils/axiosConfig';
 
 // register
 export function registerAuthor(data) {
-  return axios.post('/auth/register/', data);
+  const params = new URLSearchParams({
+    email: data.email,
+    password: data.password,
+    name: data.name
+  });
+
+  return axios.post(`/auth/register?${params.toString()}`);
 }
 
 // login
