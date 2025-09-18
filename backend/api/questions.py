@@ -23,6 +23,7 @@ def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
         question=question.question,
         choices=json.dumps(question.choices, ensure_ascii=False),  # store as JSON string
         answer=question.answer,
+        max_score=question.max_score,
     )
     db.add(db_question)
     db.commit()
@@ -48,7 +49,7 @@ def list_questions(db: Session = Depends(get_db)):
             type=q.type,  # 추가
             question=q.question,
             choices=json.loads(q.choices) if q.choices else [],
-            answer=q.answer,
+            max_score=q.max_score
         )
         for q in db_questions
     ]

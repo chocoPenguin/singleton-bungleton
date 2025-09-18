@@ -12,6 +12,8 @@ class QuestionAssignment(Base):
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)   # Group
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)     # User
+    user_answer = Column(Text, nullable=False)
+    user_score = Column(Integer, nullable=False)
     status = Column(String(20), default="assigned")  # status: assigned, completed, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
