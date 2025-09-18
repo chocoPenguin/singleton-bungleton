@@ -3,10 +3,15 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
-import Aura from '@primeuix/themes/aura';
+// import Aura from '@primeuix/themes/aura';
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import Toast from 'primevue/toast'
+
+// import Lara from '@primeuix/themes/lara';
+// import Material from '@primeuix/themes/material';
+import Nora from '@primeuix/themes/nora';
+import Calendar from 'primevue/calendar'
 
 import App from './App.vue'
 import router from './router'
@@ -17,7 +22,7 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue, {
     theme: {
-        preset: Aura,
+        preset: Nora,
         options: {
             darkModeSelector: 'light'
         }
@@ -28,3 +33,6 @@ app.use(ToastService)  // Toast 서비스 추가
 app.use(ConfirmationService)  // Confirmation 서비스 추가
 app.component('Toast', Toast)  // Toast 컴포넌트 글로벌 등록
 app.mount('#app')
+
+app.use(PrimeVue)
+app.component('Calendar', Calendar)
