@@ -14,17 +14,15 @@
         <!-- 네비게이션 메뉴 -->
         <nav class="main-nav">
           <ul class="nav-menu">
-            <li class="nav-item">
-              <router-link to="/" class="nav-link">Home</router-link>
+            <li class="nav-item dropdown" @mouseenter="handleDropdownEnter" @mouseleave="handleDropdownLeave">
+              <span class="nav-link dropdown-trigger">Questions</span>
+              <ul v-show="showQuestionsDropdown" class="dropdown-menu" @mouseenter="handleDropdownEnter" @mouseleave="handleDropdownLeave">
+                <li><router-link to="/questions/history" class="dropdown-link">Question History</router-link></li>
+                <li><router-link to="/questions/create" class="dropdown-link">Create Question</router-link></li>
+              </ul>
             </li>
             <li class="nav-item">
-              <router-link to="/quiz" class="nav-link">Quiz</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/results" class="nav-link">Results</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/about" class="nav-link">About</router-link>
+              <router-link to="/groups" class="nav-link">Group Management</router-link>
             </li>
           </ul>
         </nav>
@@ -102,7 +100,11 @@ const toast = useToast();
 const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
 const showAuthModal = ref(false);
+const showQuestionsDropdown = ref(false);
 const isLoggedIn = ref(false);
+
+// 드롭다운 타이머
+let dropdownTimer = null;
 
 // 로그인 상태 체크
 const checkAuthStatus = () => {
@@ -161,6 +163,21 @@ const logout = () => {
 const onLoginSuccess = () => {
   checkAuthStatus();
   showUserMenu.value = false;
+};
+
+// 드롭다운 핸들러
+const handleDropdownEnter = () => {
+  if (dropdownTimer) {
+    clearTimeout(dropdownTimer);
+    dropdownTimer = null;
+  }
+  showQuestionsDropdown.value = true;
+};
+
+const handleDropdownLeave = () => {
+  dropdownTimer = setTimeout(() => {
+    showQuestionsDropdown.value = false;
+  }, 200); // 200ms 지연
 };
 </script>
 
@@ -277,6 +294,65 @@ background: linear-gradient(135deg, #CDFADB 0%, #F6FDC3 2%, #FFCF96 5%, #FF8080 
 .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.2);
   color: #7F1D1D;
+}
+
+/* 드롭다운 스타일 */
+.nav-item.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-trigger:after {
+  content: "▼";
+  font-size: 0.7em;
+  margin-left: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.nav-item.dropdown:hover .dropdown-trigger:after {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  list-style: none;
+  z-index: 1000;
+}
+
+.dropdown-menu li {
+  margin: 0;
+}
+
+.dropdown-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.dropdown-link:hover {
+  background-color: #f3f4f6;
+  color: #2563eb;
+}
+
+.dropdown-link.router-link-active {
+  background-color: #eff6ff;
+  color: #2563eb;
 }
 
 /* 사용자 메뉴 */

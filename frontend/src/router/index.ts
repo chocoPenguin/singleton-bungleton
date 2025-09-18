@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/demo/HomeView.vue'
+import History from '../views/question/HistoryView.vue'
+import Create from '../views/question/CreateView.vue'
+import Groups from '../views/group/GroupsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,20 +13,19 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/quiz',
-      name: 'quiz',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/user/QuizView.vue'),
+      path: '/questions/history',
+      name: 'questionHistory',
+      component: History,
     },
     {
-      path: '/quiz/list',
-      name: 'quizList',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/user/QuizListView.vue'),
+      path: '/questions/create',
+      name: 'createQuestion',
+      component: Create,
+    },
+    {
+      path: '/groups',
+      name: 'groupManagement',
+      component: Groups,
     },
   ],
 })
