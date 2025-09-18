@@ -1,16 +1,12 @@
 <template>
     <Card>
-        <template #title>{{ question.title || 'Quiz 1' }}</template>
         <template #content>
             <div class="quiz-content">
                 <p class="question-text mb-4">
-                    {{ question.text || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
+                    {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
                 
                 <div class="answer-container mb-4">
-                    <label :for="`answer-${questionId}`" class="block text-900 font-medium mb-2">
-                        답변을 입력하세요:
-                    </label>
                     
                     <!-- 짧은 답변용 InputText -->
                     <InputText 
@@ -19,7 +15,6 @@
                         v-model="userAnswer"
                         :placeholder="placeholder"
                         fluid
-                        :maxlength="maxLength"
                         @input="handleAnswerChange"
                     />
                     
@@ -31,13 +26,12 @@
                         :placeholder="placeholder"
                         fluid
                         :rows="rows"
-                        :maxlength="maxLength"
                         autoResize
                         @input="handleAnswerChange"
                     />
                     
                     <small v-if="maxLength" class="text-500 mt-1 block">
-                        {{ userAnswer.length }} / {{ maxLength }} 글자
+                        {{ userAnswer.length }} / 300 글자
                     </small>
                 </div>
             </div>
@@ -69,7 +63,7 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: '답변을 입력해주세요...'
+        default: '답변을 입력해주세요.'
     },
     maxLength: {
         type: Number,
@@ -121,6 +115,7 @@ const submitAnswer = () => {
 .question-text {
     line-height: 1.6;
     color: var(--text-color);
+    font-family: 'Inter';
 }
 
 .answer-container {
