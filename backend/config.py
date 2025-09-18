@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     # AI Foundry Agent
     ai_foundry_agent_id: str = ""  # Agent ID for quiz generation
+    ai_foundry_agent_id_feedback: str = ""  # Agent ID for feedback generation
 
     # Environment
     environment: str = "development"
