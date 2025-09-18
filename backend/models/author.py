@@ -24,6 +24,7 @@ class Author(Base):
 class AuthorCreate(BaseModel):
     name: str
     email: EmailStr
+    password: str
 
 class AuthorResponse(BaseModel):
     id: int

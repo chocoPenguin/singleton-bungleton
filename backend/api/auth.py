@@ -18,7 +18,7 @@ def register(email: str, password: str, name: str, db: Session = Depends(get_db)
     db.add(new_author)
     db.commit()
     db.refresh(new_author)
-    return {"msg": "Author created", "email": new_author.email}
+    return {"msg": "Author created", "email": new_author.email, "name": new_author.name}
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
