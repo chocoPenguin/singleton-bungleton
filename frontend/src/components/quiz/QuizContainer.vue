@@ -26,10 +26,6 @@
           <!-- 문제 번호 표시 -->
           <div style="padding: 0.5rem 0" class="question-header mb-3 p-2 bg-primary-50 border-round flex align-items-center">
             <Badge :value="(currentPage * questionsPerPage) + index + 1" severity="info" class="mr-2" />
-            <div class="ml-auto">
-              <i v-if="answers[question.id]" class="pi pi-check-circle text-green-500 text-xl"></i>
-              <i v-else class="pi pi-circle text-gray-300 text-xl"></i>
-            </div>
           </div>
 
           <!-- 객관식 문제 -->
