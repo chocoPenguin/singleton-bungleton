@@ -3,6 +3,7 @@ import HomeView from '../views/demo/HomeView.vue'
 import History from '../views/question/HistoryView.vue'
 import Create from '../views/question/CreateView.vue'
 import Groups from '../views/group/GroupsView.vue'
+import Quiz from '../views/user/QuizView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/groups',
       name: 'groupManagement',
       component: Groups,
+    },
+    {
+      path: '/quiz/list',
+      name: 'Quiz',
+      component: Quiz,
     },
   ],
 })

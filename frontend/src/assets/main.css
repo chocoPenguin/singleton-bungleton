@@ -42,7 +42,6 @@ a,
 }
 
 :root .p-badge-info{
-  background: #FF8080;
-  color: #FFCF96;
-  padding: 0 0.5rem;
+  background: #475569;
+  color: #ffffff;
 }
