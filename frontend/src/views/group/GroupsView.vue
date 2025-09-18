@@ -526,8 +526,51 @@ const editMember = (member) => {
 
 // 멤버 제거
 const removeMember = (member) => {
-  console.log('Remove member:', member);
-  // TODO: 멤버 제거 확인 다이얼로그 표시
+  confirm.require({
+    message: `Are you sure you want to remove ${member.name} from this group?`,
+    header: 'Remove Member',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Remove',
+    accept: async () => {
+      try {
+        console.log('Removing member with ID:', member.id);
+
+        // 멤버 삭제 API 호출
+        await deleteUser(member.id);
+
+        console.log('Member removed successfully');
+
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Member removed successfully',
+          life: 3000
+        });
+
+        // 멤버 목록 새로고침
+        if (selectedGroup.value) {
+          await fetchGroupMembers(selectedGroup.value.id);
+        }
+      } catch (error) {
+        console.error('Failed to remove member:', error);
+        console.error('Error details:', error.response?.data);
+
+        let errorMessage = 'Failed to remove member. Please try again.';
+        if (error.response?.data?.detail) {
+          errorMessage = error.response.data.detail;
+        }
+
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 5000
+        });
+      }
+    }
+  });
 };
 
 // 컴포넌트 마운트 시 데이터 로드
