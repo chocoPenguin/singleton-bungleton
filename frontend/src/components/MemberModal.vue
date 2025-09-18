@@ -43,18 +43,6 @@
         </small>
       </div>
 
-      <div class="form-field">
-        <label for="role" class="field-label">Role</label>
-        <Dropdown
-          id="role"
-          v-model="memberData.role"
-          :options="roles"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select a role"
-          class="field-input"
-        />
-      </div>
     </div>
 
     <template #footer>
@@ -107,15 +95,8 @@ const saving = ref(false);
 
 const memberData = ref({
   name: '',
-  email: '',
-  role: 'Member'
+  email: ''
 });
-
-const roles = ref([
-  { label: 'Member', value: 'Member' },
-  { label: 'Moderator', value: 'Moderator' },
-  { label: 'Admin', value: 'Admin' }
-]);
 
 const isEdit = computed(() => !!props.member?.id);
 
@@ -128,8 +109,7 @@ const isValidEmail = computed(() => {
 const resetForm = () => {
   memberData.value = {
     name: props.member?.name || '',
-    email: props.member?.email || '',
-    role: props.member?.role || 'Member'
+    email: props.member?.email || ''
   };
   submitted.value = false;
 };
@@ -150,7 +130,6 @@ const saveMember = async () => {
 
   try {
     const payload = {
-      ...memberData.value,
       name: memberData.value.name.trim(),
       email: memberData.value.email.trim()
     };
