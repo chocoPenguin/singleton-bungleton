@@ -1,5 +1,10 @@
 import axios from '../utils/axiosConfig';
 
+// Get all users
+export function getAllUsers() {
+  return axios.get('/users/');
+}
+
 // Get users by group ID
 export function getUsersByGroup(groupId) {
   return axios.get(`/users/group/${groupId}`);

@@ -22,3 +22,8 @@ const payload = new URLSearchParams();
     headers: { "Content-Type": "application/x-www-form-urlencoded" }
   });
 }
+
+// Get all authors
+export function getAllAuthors() {
+  return axios.get('/authors/');
+}
