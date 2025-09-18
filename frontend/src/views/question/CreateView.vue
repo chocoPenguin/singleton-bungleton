@@ -114,12 +114,16 @@
         <div class="form-actions">
           <Button
             type="submit"
-            label="Generate Questions"
+            :label="isSubmitting ? 'AI가 퀴즈를 생성하고 있습니다...' : 'Generate Questions'"
             icon="pi pi-plus"
             :loading="isSubmitting"
+            :disabled="isSubmitting"
             class="submit-button"
             size="large"
           />
+          <small v-if="isSubmitting" class="loading-message">
+            시간이 다소 소요될 수 있습니다. 잠시만 기다려 주세요.
+          </small>
         </div>
       </form>
     </div>
@@ -136,8 +140,9 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import { getAllGroups } from '../../api/groups.js';
-import { createQuestionSet, startQuestionGeneration } from '../../api/questions.js';
+import { createQuestionSet, startQuestionGeneration, generateQuizWithAI } from '../../api/questions.js';
 import { getCurrentUserFromToken } from '../../utils/auth.js';
+import { getCurrentUser } from '../../api/users.js';
 
 const router = useRouter();
 const toast = useToast();
@@ -260,36 +265,36 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
   try {
     // Get current user info
-    const userInfo = getCurrentUserFromToken();
-    const authorEmail = userInfo?.email;
+    const userResponse = await getCurrentUser();
+    const currentUser = userResponse.data;
 
-    if (!authorEmail) {
+    if (!currentUser || !currentUser.id) {
       throw new Error('User authentication required');
     }
 
-    // Prepare question set data
-    const questionSetData = {
-      title: generateAutoTitle(),
+    // Build description from form fields
+    const description = `
+Language: ${form.value.language}
+Difficulty: ${form.value.difficulty}
+${form.value.instructions ? 'Instructions: ' + form.value.instructions.trim() : ''}
+    `.trim();
+
+    // Prepare quiz generation data for AI Foundry Agent
+    const quizData = {
       group_id: form.value.selectedGroup,
-      questions_per_person: form.value.questionsPerPerson,
-      language: form.value.language,
-      difficulty: form.value.difficulty,
-      instructions: form.value.instructions.trim() || null,
-      author_email: authorEmail,
-      status: 'pending' // Will be updated when generation starts
+      author_id: currentUser.id,
+      num_questions: form.value.questionsPerPerson,
+      description: description,
+      resource_id: null // Optional
     };
 
-    // Create question set
-    const response = await createQuestionSet(questionSetData);
-    const questionSetId = response.data.id;
-
-    // TODO: Start question generation (when LLM is ready)
-    // await startQuestionGeneration(questionSetId);
+    // Generate quiz using AI Foundry Agent
+    const response = await generateQuizWithAI(quizData);
 
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: 'Question set created successfully!',
+      detail: `Quiz generated successfully! Created ${response.data.questions_created} questions.`,
       life: 3000
     });
 
@@ -297,11 +302,15 @@ const handleSubmit = async () => {
     router.push('/questions/history');
 
   } catch (error) {
-    console.error('Failed to create question set:', error);
+    console.error('Failed to generate quiz:', error);
 
-    let errorMessage = 'Failed to create question set. Please try again.';
-    if (error.response?.data?.detail) {
+    let errorMessage = 'Failed to generate quiz. Please try again.';
+    if (error.message === 'User authentication required') {
+      errorMessage = 'User authentication required. Please log in again.';
+    } else if (error.response?.data?.detail) {
       errorMessage = error.response.data.detail;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
     }
 
     toast.add({
@@ -402,6 +411,14 @@ onMounted(() => {
 
 .submit-button {
   padding: 0.75rem 2rem;
+}
+
+.loading-message {
+  display: block;
+  text-align: center;
+  color: #6b7280;
+  margin-top: 0.75rem;
+  font-style: italic;
 }
 
 /* PrimeVue component overrides */

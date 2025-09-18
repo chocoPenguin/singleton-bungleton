@@ -11,8 +11,9 @@ class Group(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
-    language = Column(String(10), nullable=False)
+    language = Column(String(10), nullable=False, default="ko")
     memo = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=True)
@@ -22,14 +23,16 @@ class Group(Base):
 # Pydantic models (DTO)
 class GroupCreate(BaseModel):
     name: str
-    language: str
+    language: str = "ko"
     memo: Optional[str] = None
+    description: Optional[str] = None
     author_id: Optional[int] = None
 
 class GroupUpdate(BaseModel):
     name: Optional[str] = None
     language: Optional[str] = None
     memo: Optional[str] = None
+    description: Optional[str] = None
     author_id: Optional[int] = None
 
 class GroupResponse(BaseModel):
@@ -37,6 +40,7 @@ class GroupResponse(BaseModel):
     name: str
     language: str
     memo: Optional[str] = None
+    description: Optional[str] = None
     author_id: Optional[int] = None
 
     class Config:

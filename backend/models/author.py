@@ -16,8 +16,7 @@ class Author(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # ORM relationships
-    groups = relationship("Group", backref="owner")          # Author → Groups
-    questions = relationship("Question", backref="author")   # Author → Questions
+    groups = relationship("Group", back_populates="author")  # Author → Groups
 
 
 # Pydantic DTO

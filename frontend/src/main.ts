@@ -5,6 +5,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura';
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 import Toast from 'primevue/toast'
 
 import App from './App.vue'
@@ -21,5 +22,6 @@ app.use(PrimeVue, {
 });
 
 app.use(ToastService)  // Toast 서비스 추가
+app.use(ConfirmationService)  // Confirmation 서비스 추가
 app.component('Toast', Toast)  // Toast 컴포넌트 글로벌 등록
 app.mount('#app')

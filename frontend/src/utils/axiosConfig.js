@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const instance = axios.create({
   baseURL: 'http://localhost:8000/api', // FastAPI backend URL
-  timeout: 10000,
+  timeout: 60000, // 60 seconds for AI operations
   headers: {
     'Content-Type': 'application/json',
   },
