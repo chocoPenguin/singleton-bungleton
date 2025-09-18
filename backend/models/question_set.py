@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -13,11 +13,17 @@ class QuestionSet(Base):
     resource_id = Column(Integer, ForeignKey("resources.id"), nullable=True)  # resources
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)        # group
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)          # user
+    num_questions = Column(Integer, nullable=True)                            # number of quiz questions
+    description = Column(Text, nullable=True)                                 # quiz requirements (difficulty, type, etc.)
     expires_at = Column(DateTime, nullable=True)                              # expiration datetime
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # ORM relationships
     assignments = relationship("QuestionAssignment", backref="question_set", cascade="all, delete")
+    group = relationship("Group", backref="question_sets")
+    author = relationship("Author", backref="question_sets")
+    resource = relationship("Resource", backref="question_sets")
+    user = relationship("User", backref="question_sets")
 
 
 # Pydantic DTO
@@ -26,6 +32,8 @@ class QuestionSetCreate(BaseModel):
     resource_id: Optional[int] = None
     group_id: Optional[int] = None
     user_id: Optional[int] = None
+    num_questions: Optional[int] = None
+    description: Optional[str] = None
     expires_at: Optional[datetime] = None
 
 class QuestionSetResponse(BaseModel):
@@ -34,7 +42,12 @@ class QuestionSetResponse(BaseModel):
     resource_id: Optional[int] = None
     group_id: Optional[int] = None
     user_id: Optional[int] = None
+    num_questions: Optional[int] = None
+    description: Optional[str] = None
     expires_at: Optional[datetime] = None
+
+    # Add a field to hold the total number of users
+    total_users: int = 0
 
     class Config:
         from_attributes = True

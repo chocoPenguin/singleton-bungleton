@@ -34,3 +34,18 @@ export function getQuestionGenerationStatus(questionSetId) {
 export function startQuestionGeneration(questionSetId) {
   return axios.post(`/question_sets/${questionSetId}/generate`);
 }
+
+// Generate quiz with AI (Microsoft AI Foundry Agent)
+export function generateQuizWithAI(data) {
+  return axios.post('/question_sets/generate', data);
+}
+
+// Get all question sets (for history view)
+export function getAllQuestionSets() {
+  return axios.get('/question_sets/');
+}
+
+// Get question set details with questions and assignments
+export function getQuestionSetDetails(questionSetId) {
+  return axios.get(`/question_sets/${questionSetId}/details`);
+}
