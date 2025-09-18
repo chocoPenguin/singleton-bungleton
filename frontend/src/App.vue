@@ -78,12 +78,16 @@
       v-model:visible="showAuthModal"
       @login-success="onLoginSuccess"
     />
+
+    <!-- Toast 메시지 -->
+    <Toast />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
+import Toast from 'primevue/toast';
 import AuthModal from './components/AuthModal.vue';
 
 // 반응형 데이터

@@ -169,20 +169,32 @@ const handleRegister = async () => {
 
     toast.add({
       severity: 'success',
-      summary: '성공',
-      detail: '회원가입 성공! 로그인해주세요.',
+      summary: '회원가입 성공',
+      detail: '계정이 생성되었습니다!',
       life: 3000
     });
 
-    // Switch to login tab after successful registration
-    activeTab.value = 'login';
-    registerForm.value = { name: '', email: '', password: '' };
+    // Close modal after successful registration
+    setTimeout(() => {
+      isVisible.value = false;
+    }, 1500);
   } catch (err) {
     console.error(err);
+
+    let errorMessage = '회원가입에 실패했습니다.';
+    if (err.response?.data?.detail) {
+      const detail = err.response.data.detail;
+      if (detail.includes('Email already registered') || detail.includes('already registered')) {
+        errorMessage = '이미 사용중인 이메일입니다.';
+      } else {
+        errorMessage = detail;
+      }
+    }
+
     toast.add({
       severity: 'error',
       summary: '회원가입 실패',
-      detail: err.response?.data?.detail || err.message,
+      detail: errorMessage,
       life: 5000
     });
   } finally {

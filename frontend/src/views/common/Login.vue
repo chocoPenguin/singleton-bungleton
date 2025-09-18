@@ -53,7 +53,6 @@ export default {
           username: this.email,
           password: this.password,
         });
-        console.log(response.data);
         localStorage.setItem("token", response.data.access_token);
         this.$router.push("/dashboard");
       } catch (err) {
@@ -63,6 +62,7 @@ export default {
     },
     async handleRegister() {
       try {
+        console.log(this.name, this.registerEmail, this.registerPassword);
         const response = await registerAuthor({
           name: this.name,
           email: this.registerEmail,
