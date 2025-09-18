@@ -13,6 +13,15 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# CORS 설정 (Vue와 연동을 위해 필수!) - 라우터 등록 전에 먼저 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 # API routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(authors.router, prefix="/api/authors", tags=["Authors"])
@@ -26,15 +35,6 @@ app.include_router(question_assignments.router, prefix="/api/question_assignment
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
-
-# CORS 설정 (Vue와 연동을 위해 필수!)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vue 개발서버 주소
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/")
 def root():

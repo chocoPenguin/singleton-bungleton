@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Any
 
 # SQLAlchemy ORM model
 class Question(Base):
@@ -12,9 +12,11 @@ class Question(Base):
     id = Column(Integer, primary_key=True, index=True)
     resource_id = Column(Integer, ForeignKey("resources.id"), nullable=False)  # link to Resource
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=True)  # link to Author
+    type = Column(String(1), nullable=False) # M: multiple_choices, S: short subjective, L: Long subjective
     question = Column(Text, nullable=False)
     choices = Column(Text, nullable=False)  # save JSON as string
-    answer = Column(String(100), nullable=False)
+    answer = Column(Text, nullable=False)
+    user_answer = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # ORM relationship
@@ -24,6 +26,7 @@ class Question(Base):
 # Pydantic DTO
 class QuestionCreate(BaseModel):
     resource_id: int
+    type: str
     question: str
     choices: List[str]
     answer: str
@@ -32,10 +35,9 @@ class QuestionCreate(BaseModel):
 class QuestionResponse(BaseModel):
     id: int
     resource_id: int
+    type: str
     question: str
-    choices: List[str]
-    answer: str
-    author_id: Optional[int] = None
+    choices: List[Any]
 
     class Config:
         from_attributes = True
