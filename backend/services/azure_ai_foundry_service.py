@@ -280,35 +280,62 @@ class QuizGenerationService(BaseAIFoundryService):
     def __init__(self):
         super().__init__()
 
-    def build_quiz_prompt(self, group: Group, num_questions: int, description: str, user_count: int = 1) -> str:
+    def build_quiz_prompt(self, group: Group, num_questions: int, language: str, difficulty: str, description: str, user_count: int = 1) -> str:
         """Build prompt for quiz generation based on group information"""
 
+        # Check if description contains specific question type requirements
+        has_specific_type_request = any(keyword in description.lower() for keyword in [
+            '객관식', '주관식', 'multiple choice', 'short answer', 'essay',
+            'trắc nghiệm', 'tự luận', '多肢選択', '短答', 'choice', 'answer'
+        ])
+
+        # The prompt is always in Korean, but it requests the quiz in the specified language.
         prompt = f"""퀴즈를 생성해주세요.
 
-교육 대상: {group.name}
-교육 목적: {group.memo or '일반 교육'}
-총 문제 수: {num_questions}개 (그룹 내 {user_count}명의 사용자가 각각 다른 문제를 받을 예정)
-추가 요구사항: {description}
+**요청 언어:** {language} (이 언어로 문제를 출제해주세요.)
 
-중요: 각 사용자가 서로 다른 문제를 받을 수 있도록 다양하고 독창적인 {num_questions}개의 문제를 생성해주세요.
-같은 주제나 개념이라도 다른 관점이나 접근 방식으로 문제를 출제해주세요.
+**교육 대상:** {group.name}
+**교육 목적:** {group.memo or '일반 교육'}
+**총 문제 수:** {num_questions} * {user_count} 개 (그룹 내 {user_count}명의 사용자가 각각 다른 문제를 받을 예정)
+**난이도:** {difficulty}
+**추가 요구사항:** {description}
 
-응답은 반드시 다음 JSON 형식을 따라야 합니다:
+**중요 지시사항:**
+1.  각 사용자가 서로 다른 문제를 받을 수 있도록 다양하고 독창적인 {num_questions} * {user_count}개의 문제를 생성해주세요.
+2.  같은 주제나 개념이라도 다른 관점이나 접근 방식으로 문제를 출제해주세요.
+3.  각 문제의 배점('max_score')은 1인당 총점 100점을 준수하여 문항별 난이도를 고려해 알아서 설정해 주세요.
+
+**응답 형식 (JSON):**
+응답은 반드시 다음 JSON 형식을 따라야 합니다. 다른 설명 없이 JSON 객체만 반환해주세요.
 {{
   "questions": [
     {{
-      "question": "문제 내용",
-      "choices": ["선택지1", "선택지2", "선택지3", "선택지4"],
-      "answer": "정답"
+      "question": "Content of the question in the requested language",
+      "type": "M",
+      "choices": ["Choice 1 text", "Choice 2 text", "Choice 3 text", "Choice 4 text"],
+      "answer": "The full text of the correct answer from the choices list",
+      "max_score": "Score is distributed based on the difficulty of each question (the total score per person must be 100 points)"
+    }},
+    {{
+      "question": "Content of the short answer question in the requested language",
+      "type": "S",
+      "choices": null,
+      "answer": "The expected answer for the short answer question",
+      "max_score": "Score is distributed based on the difficulty of each question (the total score per person must be 100 points)"
     }}
   ]
 }}
 
-각 문제는 교육 대상과 목적에 맞게 구성하고, 선택지는 4개씩 제공하며, 정답은 선택지 중 하나와 정확히 일치해야 합니다."""
+**필드 설명:**
+- `type`: "M"(객관식) 또는 "S"(주관식) 중 하나여야 합니다.
+- `choices`: 객관식의 경우, 반드시 4개의 **문자열**을 포함하는 리스트여야 합니다. Key/Value 형태가 아닌, 선택지 텍스트의 리스트입니다.
+- `answer`: 객관식의 경우, 반드시 `choices` 리스트에 있는 **정답의 전체 텍스트**를 그대로 기입해야 합니다. 'A'나 '1'과 같은 번호나 문자가 아닌, 실제 정답 내용을 기입해주세요.
+
+{"다양성을 위해 객관식과 주관식 문제를 모두 포함해주세요." if not has_specific_type_request else "추가 요구사항에서 언급된 구체적인 문제 유형 요구사항을 따라주세요."} 각 문제는 교육 대상과 목적에 맞게 구성해주세요."""
 
         return prompt
 
-    async def generate_quiz(self, group: Group, num_questions: int, description: str, user_count: int = 1) -> Dict[str, Any]:
+    async def generate_quiz(self, group: Group, num_questions: int, language: str, difficulty: str, description: str, user_count: int = 1) -> Dict[str, Any]:
         """Generate quiz using AI Foundry Agent following ai-foundry-agent.md"""
         try:
             # Get agent ID from settings
@@ -320,8 +347,8 @@ class QuizGenerationService(BaseAIFoundryService):
             print(f"Agent ID: {agent_id}")
 
             # Build prompt
-            prompt = self.build_quiz_prompt(group, num_questions, description, user_count)
-            print(f"Sending prompt to AI Foundry agent: {prompt[:100]}...")
+            prompt = self.build_quiz_prompt(group, num_questions, language, difficulty, description, user_count)
+            print(f"Sending prompt to AI Foundry agent: {prompt}")
 
             # Call agent following 5-step pattern
             ai_response = await self.call_agent(agent_id, prompt)
@@ -381,26 +408,43 @@ class QuizGenerationService(BaseAIFoundryService):
     def validate_quiz_response(self, quiz_data: Dict[str, Any]) -> bool:
         """Validate the quiz response format"""
         if "questions" not in quiz_data:
+            print("Validation failed: 'questions' key missing from quiz_data")
             return False
 
         questions = quiz_data["questions"]
         if not isinstance(questions, list):
+            print("Validation failed: 'questions' is not a list")
             return False
 
-        for question in questions:
-            required_fields = ["question", "choices", "answer"]
+        for i, question in enumerate(questions):
+            print(f"Validating question {i+1}...")
+            required_fields = ["question", "type", "choices", "answer"]
             if not all(field in question for field in required_fields):
+                print(f"Validation failed for question {i+1}: Missing one or more required fields. Found: {list(question.keys())}")
                 return False
 
-            if not isinstance(question["choices"], list):
+            # For multiple choice questions, validate choices
+            if question.get("type") == "M":
+                if not isinstance(question.get("choices"), list):
+                    print(f"Validation failed for question {i+1}: 'choices' is not a list for a multiple choice question.")
+                    return False
+                if len(question["choices"]) != 4:
+                    print(f"Validation failed for question {i+1}: Expected 4 choices, but got {len(question['choices'])}")
+                    return False
+                if question["answer"] not in question["choices"]:
+                    print(f"Validation failed for question {i+1}: Answer '{question['answer']}' not found in choices {question['choices']}")
+                    return False
+            
+            # For short answer questions, choices can be null/empty
+            elif question.get("type") == "S":
+                # No specific validation for short answer choices needed for now
+                pass
+            
+            else:
+                print(f"Validation failed for question {i+1}: Invalid question type '{question.get('type')}'")
                 return False
 
-            if len(question["choices"]) != 4:
-                return False
-
-            if question["answer"] not in question["choices"]:
-                return False
-
+        print("All questions validated successfully.")
         return True
 
 

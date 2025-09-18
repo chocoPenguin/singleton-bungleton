@@ -34,7 +34,7 @@
           >
             <template #content>
               <div class="card-header">
-                <h3 class="card-title">{{ questionSet.description || 'Untitled Quiz Set' }}</h3>
+                <h3 class="card-title">{{ questionSet.title || 'Untitled Quiz Set' }}</h3>
                 <Badge :value="questionSet.num_questions + '문제'" severity="info" />
               </div>
 
@@ -81,16 +81,18 @@
         <div v-else class="questions-container">
           <div class="questions-summary">
             <h3>총 {{ questionDetails.length }}개의 문제</h3>
-            <p>퀴즈 세트: {{ selectedQuestionSet.description || 'Untitled' }}</p>
+            <p>퀴즈 세트: {{ selectedQuestionSet.title || 'Untitled' }}</p>
           </div>
 
-          <Accordion :activeIndex="0">
+          <Accordion :activeIndex="0" class="custom-accordion">
             <AccordionTab
               v-for="(question, index) in questionDetails"
               :key="question.question_id"
               :header="`문제 ${index + 1}: ${truncateText(question.question, 50)}`"
+              class="custom-accordion-tab"
             >
               <div class="question-detail">
+                <!-- 문제 내용 전체 표시 -->
                 <div class="question-content">
                   <h4>문제</h4>
                   <p class="question-text">{{ question.question }}</p>
@@ -138,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
@@ -232,17 +234,161 @@ const getStatusSeverity = (status) => {
   return severityMap[status] || 'secondary';
 };
 
+// 궁극의 아코디언 스타일링 솔루션 - MutationObserver 기반
+const createUltimateAccordionSolution = () => {
+  let observer = null;
+
+  // 인라인 스타일 직접 적용 함수
+  const applyInlineStyles = (element, styles) => {
+    Object.entries(styles).forEach(([property, value]) => {
+      element.style.setProperty(property, value, 'important');
+    });
+  };
+
+  // 모든 텍스트 요소에 인라인 스타일 강제 적용
+  const forceAccordionStyles = () => {
+    const accordion = document.querySelector('.custom-accordion');
+    if (!accordion) return;
+
+    const headers = accordion.querySelectorAll('.p-accordion-header');
+
+    headers.forEach(header => {
+      // 모든 하위 텍스트 요소 찾기
+      const textElements = header.querySelectorAll('*');
+      const isActive = header.classList.contains('p-accordion-header-active');
+
+      // 기본 스타일
+      const baseStyles = {
+        'text-shadow': 'none',
+        'opacity': '1',
+        'background-color': 'transparent',
+        'border': 'none',
+        'outline': 'none'
+      };
+
+      // 상태별 색상 스타일
+      const colorStyles = isActive
+        ? { 'color': '#2563eb', 'font-weight': '700' }  // 활성 상태 - 파란색
+        : { 'color': '#374151', 'font-weight': '600' }; // 비활성 상태 - 진한 회색
+
+      const finalStyles = { ...baseStyles, ...colorStyles };
+
+      // 헤더 자체와 모든 하위 요소에 인라인 스타일 적용
+      applyInlineStyles(header, finalStyles);
+      textElements.forEach(el => applyInlineStyles(el, finalStyles));
+
+      // 호버 이벤트 리스너 재설정
+      header.onmouseenter = () => {
+        const hoverStyles = isActive
+          ? { 'color': '#1d4ed8', 'font-weight': '700' }  // 활성+호버 - 진한 파란색
+          : { 'color': '#111827', 'font-weight': '700' }; // 비활성+호버 - 검은색
+
+        const hoverFinalStyles = { ...baseStyles, ...hoverStyles };
+        applyInlineStyles(header, hoverFinalStyles);
+        textElements.forEach(el => applyInlineStyles(el, hoverFinalStyles));
+      };
+
+      header.onmouseleave = () => {
+        const leaveStyles = isActive
+          ? { 'color': '#2563eb', 'font-weight': '700' }
+          : { 'color': '#374151', 'font-weight': '600' };
+
+        const leaveFinalStyles = { ...baseStyles, ...leaveStyles };
+        applyInlineStyles(header, leaveFinalStyles);
+        textElements.forEach(el => applyInlineStyles(el, leaveFinalStyles));
+      };
+    });
+  };
+
+  // MutationObserver로 DOM 변화 감시
+  const startObserver = () => {
+    if (observer) observer.disconnect();
+
+    observer = new MutationObserver((mutations) => {
+      let shouldReapply = false;
+
+      mutations.forEach((mutation) => {
+        // 클래스 변화나 새 노드 추가 감지
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          shouldReapply = true;
+        } else if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          shouldReapply = true;
+        }
+      });
+
+      if (shouldReapply) {
+        setTimeout(forceAccordionStyles, 50);
+      }
+    });
+
+    const accordion = document.querySelector('.custom-accordion');
+    if (accordion) {
+      observer.observe(accordion, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    }
+  };
+
+  // 초기 스타일 적용 및 관찰자 시작
+  const initialize = () => {
+    forceAccordionStyles();
+    startObserver();
+
+    // 추가 안전장치: 주기적으로 스타일 재적용
+    const intervalId = setInterval(() => {
+      if (document.querySelector('.custom-accordion')) {
+        forceAccordionStyles();
+      } else {
+        clearInterval(intervalId);
+      }
+    }, 2000);
+  };
+
+  return { initialize, forceAccordionStyles };
+};
+
+// 궁극의 아코디언 솔루션 인스턴스 생성
+let accordionSolution = null;
+
 // Initialize
 onMounted(() => {
   fetchQuestionSets();
 });
+
+// Watch for questionDetails changes and apply ultimate styling solution
+watch(questionDetails, async () => {
+  if (questionDetails.value.length > 0) {
+    // DOM이 완전히 업데이트될 때까지 기다림
+    await nextTick();
+
+    // 잠시 후 궁극의 솔루션 적용
+    setTimeout(() => {
+      console.log('🚀 questionDetails 변화 감지 - 궁극의 아코디언 솔루션 시작');
+
+      if (accordionSolution) {
+        accordionSolution.forceAccordionStyles();
+      } else {
+        accordionSolution = createUltimateAccordionSolution();
+        accordionSolution.initialize();
+      }
+    }, 300);
+  }
+}, { deep: true });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/assets/styles/datatable.scss';
+
 .history-view {
+  font-family: 'Inter', sans-serif;
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  background-color: #ffffff; // 흰색 배경
+  color: #111827; // 검은색 텍스트
 }
 
 .page-header {
@@ -253,12 +399,12 @@ onMounted(() => {
 .page-title {
   font-size: 2rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #111827;
   margin: 0 0 0.5rem 0;
 }
 
 .page-description {
-  color: #6b7280;
+  color: #4b5563;
   font-size: 1.1rem;
   margin: 0;
 }
@@ -273,51 +419,51 @@ onMounted(() => {
 .section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #374151;
+  color: #1f2937;
   margin: 0 0 1rem 0;
 }
 
-.loading-container {
+.loading-container, .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 3rem;
   text-align: center;
-  color: #6b7280;
+  color: #4b5563;
+  background: #f9fafb;
+  border-radius: 0.75rem;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
+.question-sets-section, .question-details-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.question-sets-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.question-details-section {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .question-set-card {
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid transparent;
-}
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 0.5rem;
 
-.question-set-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
 
-.question-set-card.selected {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  &.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
 }
 
 .card-header {
@@ -331,59 +477,18 @@ onMounted(() => {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0;
-  line-height: 1.4;
 }
 
 .card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.detail-item i {
-  color: #9ca3af;
-}
-
-.question-details-section {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
 }
 
 .questions-summary {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: #ffffff;
   border-radius: 0.5rem;
-}
-
-.questions-summary h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1f2937;
-}
-
-.questions-summary p {
-  margin: 0;
-  color: #6b7280;
+  border: 1px solid #e5e7eb;
 }
 
 .question-detail {
@@ -410,28 +515,41 @@ onMounted(() => {
   margin: 0;
   color: #1f2937;
   line-height: 1.6;
+  background: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border-left: 4px solid #3b82f6;
 }
 
 .choices-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  background: #f9fafb;
+  border-radius: 0.375rem;
+  overflow: hidden;
 }
 
 .choices-list li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
+  background: white;
+  color: #374151;
+  font-weight: 500;
 
-.choices-list li.correct-answer {
-  background: #f0f9ff;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border-bottom: none;
-  margin-bottom: 0.25rem;
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.correct-answer {
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    font-weight: 600;
+    color: #065f46;
+  }
 }
 
 .meta-info {
@@ -441,6 +559,7 @@ onMounted(() => {
   padding: 1rem;
   background: #f9fafb;
   border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
 }
 
 .meta-item {
@@ -448,31 +567,147 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
+  color: #374151;
 }
 
-/* Responsive design */
-@media (max-width: 1024px) {
-  .content-container {
-    grid-template-columns: 1fr;
-  }
-
-  .question-details-section {
-    max-height: 60vh;
-  }
+.meta-item strong {
+  color: #374151;
 }
 
-@media (max-width: 768px) {
-  .history-view {
-    padding: 1rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .meta-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+// Accordion styles for light theme
+::v-deep(.p-accordion-header-link) {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
 }
+
+::v-deep(.p-accordion-header:not(.p-disabled).p-accordion-header-active > .p-accordion-header-link) {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
+}
+
+::v-deep(.p-accordion-content) {
+  background-color: #ffffff !important;
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+  border-top: 0 !important;
+}
+
+/* 라이트 테마 강제 적용 */
+.question-details-section {
+  background-color: #ffffff !important; /* 흰색 배경 */
+  color: #1f2937 !important; /* 어두운 글자색 */
+}
+
+.question-details-section .section-title,
+.question-details-section h3,
+.question-details-section h4,
+.question-details-section p,
+.question-details-section strong,
+.question-details-section span,
+.question-details-section li {
+  color: #1f2937 !important; /* 모든 텍스트 어두운 색으로 */
+}
+
+.question-details-section .questions-summary,
+.question-details-section .meta-info {
+  background-color: #f9fafb !important; /* 약간 밝은 회색 배경 */
+  border-color: #e5e7eb !important;
+}
+
+.question-details-section .choices-list li {
+  background-color: #ffffff !important;
+}
+
+.question-details-section .choices-list li.correct-answer {
+  background-color: #dbeafe !important; /* 정답 선택지 배경 */
+  color: #1e40af !important;
+}
+
+/* ==============================================
+   ACCORDION HEADER TEXT VISIBILITY - ULTIMATE FIX
+   ============================================== */
+
+/* 아코디언 헤더 텍스트 가시성을 위한 최강 우선순위 CSS */
+.history-view .questions-container .custom-accordion .p-accordion-header,
+.history-view .questions-container .custom-accordion .p-accordion-header *,
+.history-view .questions-container .custom-accordion .p-accordion-header span,
+.history-view .questions-container .custom-accordion .p-accordion-header div,
+.history-view .questions-container .custom-accordion .p-accordion-header a,
+.history-view .questions-container .custom-accordion .p-accordion-header button,
+.history-view .questions-container .custom-accordion .p-accordion-header .p-accordion-header-link {
+  color: #374151 !important; /* 기본 상태 - 진한 회색 */
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* 호버 상태 */
+.history-view .questions-container .custom-accordion .p-accordion-header:hover,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover *,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover span,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover div,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover a,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover button,
+.history-view .questions-container .custom-accordion .p-accordion-header:hover .p-accordion-header-link {
+  color: #1f2937 !important; /* 호버 상태 - 더 진한 회색 */
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* 활성 상태 (열린 상태) */
+.history-view .questions-container .custom-accordion .p-accordion-header-active,
+.history-view .questions-container .custom-accordion .p-accordion-header-active *,
+.history-view .questions-container .custom-accordion .p-accordion-header-active span,
+.history-view .questions-container .custom-accordion .p-accordion-header-active div,
+.history-view .questions-container .custom-accordion .p-accordion-header-active a,
+.history-view .questions-container .custom-accordion .p-accordion-header-active button,
+.history-view .questions-container .custom-accordion .p-accordion-header-active .p-accordion-header-link {
+  color: #2563eb !important; /* 활성 상태 - 파란색 */
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* 활성 + 호버 상태 */
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover *,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover span,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover div,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover a,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover button,
+.history-view .questions-container .custom-accordion .p-accordion-header-active:hover .p-accordion-header-link {
+  color: #1d4ed8 !important; /* 활성+호버 상태 - 진한 파란색 */
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* 글로벌 백업 - 최후의 수단 */
+:global(.custom-accordion .p-accordion-header *) {
+  color: #374151 !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+:global(.custom-accordion .p-accordion-header:hover *) {
+  color: #1f2937 !important;
+}
+
+:global(.custom-accordion .p-accordion-header-active *) {
+  color: #2563eb !important;
+}
+
+:global(.custom-accordion .p-accordion-header-active:hover *) {
+  color: #1d4ed8 !important;
+}
+
 </style>
