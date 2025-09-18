@@ -16,7 +16,7 @@ class Question(Base):
     question = Column(Text, nullable=False)
     choices = Column(Text, nullable=False)  # save JSON as string
     answer = Column(Text, nullable=False)
-    user_answer = Column(Text, nullable=False)
+    max_score = Column(Integer, nullable=False)  # Score assigned to this question
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # ORM relationship
@@ -30,6 +30,7 @@ class QuestionCreate(BaseModel):
     question: str
     choices: List[str]
     answer: str
+    max_score: int
     author_id: Optional[int] = None
 
 class QuestionResponse(BaseModel):
@@ -38,6 +39,7 @@ class QuestionResponse(BaseModel):
     type: str
     question: str
     choices: List[Any]
+    max_score: int
 
     class Config:
         from_attributes = True
