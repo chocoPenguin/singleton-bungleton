@@ -1,10 +1,9 @@
 <template>
     <Card>
-        <template #title>{{ question.title || 'Quiz 1' }}</template>
         <template #content>
             <div class="quiz-content">
                 <p class="question-text mb-4">
-                    {{ question.text || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
+                    {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
                 
                 <div class="choices-container">
@@ -39,7 +38,6 @@
 import { ref, computed } from 'vue';
 import Card from 'primevue/card';
 import RadioButton from 'primevue/radiobutton';
-import Button from 'primevue/button';
 
 // Props 정의
 const props = defineProps({
@@ -107,6 +105,7 @@ const submitAnswer = () => {
     border: 1px solid var(--surface-border);
     border-radius: var(--border-radius);
     transition: all 0.2s;
+    padding: 0 0.5rem;
 }
 
 .choice-item:hover {
@@ -116,6 +115,7 @@ const submitAnswer = () => {
 
 .choice-item label {
     user-select: none;
+    padding: 0 0.5rem;
 }
 
 .quiz-actions {

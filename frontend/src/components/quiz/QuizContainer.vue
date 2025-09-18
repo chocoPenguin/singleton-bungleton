@@ -27,7 +27,7 @@
           <!-- 문제 번호 표시 -->
           <div class="question-header mb-3 p-2 bg-primary-50 border-round flex align-items-center">
             <Badge :value="(currentPage * questionsPerPage) + index + 1" severity="info" class="mr-2" />
-            <span class="font-semibold text-primary">{{ question.title }}</span>
+            <span style="padding: 0 0.5rem" class="font-semibold text-primary">문제 {{ (currentPage * questionsPerPage) + index + 1 }}</span>
             <div class="ml-auto">
               <i v-if="answers[question.id]" class="pi pi-check-circle text-green-500 text-xl"></i>
               <i v-else class="pi pi-circle text-gray-300 text-xl"></i>
@@ -36,7 +36,7 @@
 
           <!-- 객관식 문제 -->
           <MultipleChoiceQuestion
-            v-if="question.type === 'multiple_choice'"
+            v-if="question.Type === 'M'"
             :key="`mc-${question.id}`"
             :question="question"
             :choices="question.choices"
@@ -44,14 +44,22 @@
             @next="() => {}"
           />
 
-          <!-- 주관식 문제 -->
+          <!-- 단답형 문제 -->
           <SubjectiveQuestion
-            v-else-if="question.type === 'subjective'"
+            v-else-if="question.Type === 'S'"
             :key="`sub-${question.id}`"
             :question="question"
-            :answer-type="question.answerType || 'long'"
-            :max-length="question.maxLength"
-            :placeholder="question.placeholder"
+            :answer-type="'short'"
+            @answer="handleAnswer"
+            @next="() => {}"
+          />
+
+          <!-- 서술형 문제 -->
+          <SubjectiveQuestion
+            v-else-if="question.Type === 'L'"
+            :key="`sub-${question.id}`"
+            :question="question"
+            :answer-type="'long'"
             @answer="handleAnswer"
             @next="() => {}"
           />
@@ -59,7 +67,7 @@
           <!-- 알 수 없는 타입 -->
           <Card v-else>
             <template #content>
-              <p class="text-center text-500">알 수 없는 문제 타입: {{ question.type }}</p>
+              <p class="text-center text-500">알 수 없는 문제 타입: {{ question.Type }}</p>
             </template>
           </Card>
         </div>
@@ -101,7 +109,7 @@
           </div>
 
           <div class="flex gap-2">
-            <Button
+            <Button style="background-color: #FFCF96; border: none; color: #374151;"
               v-if="currentPage < totalPages - 1"
               label="다음 페이지"
               severity="primary"
@@ -109,7 +117,7 @@
               iconPos="right"
               @click="goToNextPage"
             />
-            <Button
+            <Button style="background-color: #FF8080; border: none"
               v-if="currentPage === totalPages - 1"
               label="퀴즈 완료"
               severity="success"
@@ -204,43 +212,48 @@ const fetchQuestions = async () => {
   
   try {
     // 개발용 예제 데이터 (20개)
-    questions.value = [
-      // 1-5번 문제
-      { id: 1, type: 'multiple_choice', title: 'JavaScript 기초', text: 'JavaScript에서 변수를 선언하는 키워드가 아닌 것은?', choices: [{ value: 'A', label: 'var' }, { value: 'B', label: 'let' }, { value: 'C', label: 'const' }, { value: 'D', label: 'define' }] },
-      { id: 2, type: 'subjective', title: '서술형 문제', text: 'Vue.js의 주요 장점 3가지를 설명하세요.', answerType: 'long', maxLength: 500, placeholder: 'Vue.js의 장점을 자세히 설명해주세요...' },
-      { id: 3, type: 'subjective', title: '간단 답변', text: 'HTML의 약자는 무엇인가요?', answerType: 'short', maxLength: 50, placeholder: '약자를 입력하세요' },
-      { id: 4, type: 'multiple_choice', title: 'CSS 기초', text: 'CSS에서 박스 모델에 포함되지 않는 것은?', choices: [{ value: 'A', label: 'margin' }, { value: 'B', label: 'padding' }, { value: 'C', label: 'border' }, { value: 'D', label: 'display' }] },
-      { id: 5, type: 'subjective', title: 'React 개념', text: 'React의 Virtual DOM에 대해 간단히 설명하세요.', answerType: 'long', maxLength: 300, placeholder: 'Virtual DOM의 개념을 설명해주세요...' },
-      
-      // 6-10번 문제
-      { id: 6, type: 'multiple_choice', title: 'HTTP 프로토콜', text: 'HTTP 상태 코드 중 "Not Found"를 나타내는 코드는?', choices: [{ value: 'A', label: '200' }, { value: 'B', label: '404' }, { value: 'C', label: '500' }, { value: 'D', label: '302' }] },
-      { id: 7, type: 'subjective', title: 'Git 개념', text: 'Git의 브랜치(branch)란 무엇인가요?', answerType: 'short', maxLength: 100, placeholder: '브랜치의 개념을 간단히...' },
-      { id: 8, type: 'multiple_choice', title: 'Database', text: 'SQL에서 테이블의 모든 데이터를 조회하는 명령어는?', choices: [{ value: 'A', label: 'SELECT ALL' }, { value: 'B', label: 'SELECT *' }, { value: 'C', label: 'GET ALL' }, { value: 'D', label: 'SHOW ALL' }] },
-      { id: 9, type: 'subjective', title: 'API 설계', text: 'RESTful API의 특징 2가지를 설명하세요.', answerType: 'long', maxLength: 400, placeholder: 'RESTful API의 특징을 설명해주세요...' },
-      { id: 10, type: 'multiple_choice', title: 'Node.js', text: 'Node.js의 특징이 아닌 것은?', choices: [{ value: 'A', label: '비동기 처리' }, { value: 'B', label: '이벤트 기반' }, { value: 'C', label: '멀티스레드' }, { value: 'D', label: '서버사이드' }] },
-      
-      // 11-15번 문제
-      { id: 11, type: 'multiple_choice', title: 'TypeScript', text: 'TypeScript의 장점이 아닌 것은?', choices: [{ value: 'A', label: '정적 타입 검사' }, { value: 'B', label: '컴파일 타임 에러 검출' }, { value: 'C', label: '런타임 성능 향상' }, { value: 'D', label: 'IDE 지원 향상' }] },
-      { id: 12, type: 'subjective', title: '웹 보안', text: 'XSS 공격이란 무엇인가요?', answerType: 'long', maxLength: 300, placeholder: 'XSS 공격에 대해 설명해주세요...' },
-      { id: 13, type: 'multiple_choice', title: '알고리즘', text: '시간 복잡도가 O(1)인 연산은?', choices: [{ value: 'A', label: '배열 순회' }, { value: 'B', label: '이진 탐색' }, { value: 'C', label: '해시 테이블 조회' }, { value: 'D', label: '정렬' }] },
-      { id: 14, type: 'subjective', title: '디자인 패턴', text: 'MVC 패턴의 각 구성요소 역할을 설명하세요.', answerType: 'long', maxLength: 400, placeholder: 'Model, View, Controller의 역할을...' },
-      { id: 15, type: 'multiple_choice', title: '네트워크', text: 'OSI 7계층 모델에서 HTTP는 몇 번째 계층에 속하나요?', choices: [{ value: 'A', label: '5계층' }, { value: 'B', label: '6계층' }, { value: 'C', label: '7계층' }, { value: 'D', label: '4계층' }] },
-      
-      // 16-20번 문제
-      { id: 16, type: 'subjective', title: '클라우드', text: 'AWS와 같은 클라우드 서비스의 장점은?', answerType: 'short', maxLength: 150, placeholder: '클라우드의 주요 장점을...' },
-      { id: 17, type: 'multiple_choice', title: 'DevOps', text: 'CI/CD에서 CI는 무엇의 약자인가요?', choices: [{ value: 'A', label: 'Continuous Integration' }, { value: 'B', label: 'Code Integration' }, { value: 'C', label: 'Complete Integration' }, { value: 'D', label: 'Custom Integration' }] },
-      { id: 18, type: 'subjective', title: '성능 최적화', text: '웹사이트 로딩 속도를 개선하는 방법 3가지를 나열하세요.', answerType: 'long', maxLength: 350, placeholder: '성능 최적화 방법을 설명해주세요...' },
-      { id: 19, type: 'multiple_choice', title: 'Docker', text: 'Docker 컨테이너의 특징이 아닌 것은?', choices: [{ value: 'A', label: '가상화' }, { value: 'B', label: '격리' }, { value: 'C', label: '이식성' }, { value: 'D', label: '하드웨어 에뮬레이션' }] },
-      { id: 20, type: 'subjective', title: '프로젝트 관리', text: '애자일 개발 방법론의 핵심 원칙을 설명하세요.', answerType: 'long', maxLength: 400, placeholder: '애자일의 핵심 원칙을 설명해주세요...' }
-    ];
+    // questions.value = [
+    //   // 1-5번 문제
+    //   { id: 1, Type: 'M', question: 'JavaScript에서 변수를 선언하는 키워드가 아닌 것은?', choices: [{ value: 'A', label: 'var' }, { value: 'B', label: 'let' }, { value: 'C', label: 'const' }, { value: 'D', label: 'define' }] },
+    //   { id: 2, Type: 'L', question: 'Vue.js의 주요 장점 3가지를 설명하세요.' },
+    //   { id: 3, Type: 'S', question: 'HTML의 약자는 무엇인가요?' },
+    //   { id: 4, Type: 'M', question: 'CSS에서 박스 모델에 포함되지 않는 것은?', choices: [{ value: 'A', label: 'margin' }, { value: 'B', label: 'padding' }, { value: 'C', label: 'border' }, { value: 'D', label: 'display' }] },
+    //   { id: 5, Type: 'L', question: 'React의 Virtual DOM에 대해 간단히 설명하세요.' },
+    //
+    //   // 6-10번 문제
+    //   { id: 6, Type: 'M', question: 'HTTP 상태 코드 중 "Not Found"를 나타내는 코드는?', choices: [{ value: 'A', label: '200' }, { value: 'B', label: '404' }, { value: 'C', label: '500' }, { value: 'D', label: '302' }] },
+    //   { id: 7, Type: 'S', question: 'Git의 브랜치(branch)란 무엇인가요?' },
+    //   { id: 8, Type: 'M', question: 'SQL에서 테이블의 모든 데이터를 조회하는 명령어는?', choices: [{ value: 'A', label: 'SELECT ALL' }, { value: 'B', label: 'SELECT *' }, { value: 'C', label: 'GET ALL' }, { value: 'D', label: 'SHOW ALL' }] },
+    //   { id: 9, Type: 'L', question: 'RESTful API의 특징 2가지를 설명하세요.' },
+    //   { id: 10, Type: 'M', question: 'Node.js의 특징이 아닌 것은?', choices: [{ value: 'A', label: '비동기 처리' }, { value: 'B', label: '이벤트 기반' }, { value: 'C', label: '멀티스레드' }, { value: 'D', label: '서버사이드' }] },
+    //
+    //   // 11-15번 문제
+    //   { id: 11, Type: 'M', question: 'TypeScript의 장점이 아닌 것은?', choices: [{ value: 'A', label: '정적 타입 검사' }, { value: 'B', label: '컴파일 타임 에러 검출' }, { value: 'C', label: '런타임 성능 향상' }, { value: 'D', label: 'IDE 지원 향상' }] },
+    //   { id: 12, Type: 'L', question: 'XSS 공격이란 무엇인가요?' },
+    //   { id: 13, Type: 'M', question: '시간 복잡도가 O(1)인 연산은?', choices: [{ value: 'A', label: '배열 순회' }, { value: 'B', label: '이진 탐색' }, { value: 'C', label: '해시 테이블 조회' }, { value: 'D', label: '정렬' }] },
+    //   { id: 14, Type: 'L', question: 'MVC 패턴의 각 구성요소 역할을 설명하세요.' },
+    //   { id: 15, Type: 'M', question: 'OSI 7계층 모델에서 HTTP는 몇 번째 계층에 속하나요?', choices: [{ value: 'A', label: '5계층' }, { value: 'B', label: '6계층' }, { value: 'C', label: '7계층' }, { value: 'D', label: '4계층' }] },
+    //
+    //   // 16-20번 문제
+    //   { id: 16, Type: 'S', question: 'AWS와 같은 클라우드 서비스의 장점은?' },
+    //   { id: 17, Type: 'M', question: 'CI/CD에서 CI는 무엇의 약자인가요?', choices: [{ value: 'A', label: 'Continuous Integration' }, { value: 'B', label: 'Code Integration' }, { value: 'C', label: 'Complete Integration' }, { value: 'D', label: 'Custom Integration' }] },
+    //   { id: 18, Type: 'L', question: '웹사이트 로딩 속도를 개선하는 방법 3가지를 나열하세요.' },
+    //   { id: 19, Type: 'M', question: 'Docker 컨테이너의 특징이 아닌 것은?', choices: [{ value: 'A', label: '가상화' }, { value: 'B', label: '격리' }, { value: 'C', label: '이식성' }, { value: 'D', label: '하드웨어 에뮬레이션' }] },
+    //   { id: 20, Type: 'L', question: '애자일 개발 방법론의 핵심 원칙을 설명하세요.' }
+    // ];
 
     // 실제 API 호출은 주석 처리 (나중에 사용)
-    /*
-    const response = await fetch('/api/quiz/questions');
+
+    const response = await fetch('http://localhost:8080/api/questions');
     const data = await response.json();
-    questions.value = data.questions || [];
-    */
-    
+
+    // 백엔드 데이터를 프론트엔드 형식에 맞게 변환
+    questions.value = data.map(q => ({
+      id: q.id,
+      Type: q.type, // 백엔드 'type' -> 프론트엔드 'Type'
+      question: q.question,
+      choices: q.choices,
+    }));
   } catch (error) {
     console.error('문제 로딩 실패:', error);
     
@@ -248,9 +261,8 @@ const fetchQuestions = async () => {
     questions.value = [
       {
         id: 1,
-        type: 'multiple_choice',
-        title: 'JavaScript 기초',
-        text: 'JavaScript에서 변수를 선언하는 키워드가 아닌 것은?',
+        Type: 'M',
+        question: 'JavaScript에서 변수를 선언하는 키워드가 아닌 것은?',
         choices: [
           { value: 'A', label: 'var' },
           { value: 'B', label: 'let' },
@@ -389,5 +401,14 @@ onMounted(() => {
     flex-direction: column;
     gap: 0.5rem;
   }
+}
+
+.page-nav{
+  justify-content: center; /* 가로축 가운데 정렬 */
+  align-items: center;     /* 세로축 가운데 정렬 */
+
+  height: 10vh;           /* 세로 가운데 맞추려면 높이 필요 */
+  display: flex;
+  gap: 0.5rem;
 }
 </style>

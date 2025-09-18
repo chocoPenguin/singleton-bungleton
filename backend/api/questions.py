@@ -45,8 +45,9 @@ def list_questions(db: Session = Depends(get_db)):
         QuestionResponse(
             id=q.id,
             resource_id=q.resource_id,
+            type=q.type,  # 추가
             question=q.question,
-            choices=json.loads(q.choices),
+            choices=json.loads(q.choices) if q.choices else [],
             answer=q.answer,
         )
         for q in db_questions
