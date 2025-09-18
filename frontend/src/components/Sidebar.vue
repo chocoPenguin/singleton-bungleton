@@ -12,27 +12,17 @@
     <!-- Navigation Menu -->
     <nav class="sidebar-nav">
       <ul class="nav-menu">
-        <!-- Home -->
-        <li class="nav-item">
-          <router-link to="/" class="nav-link">
-            <i class="pi pi-home nav-icon"></i>
-            <span class="nav-label">Home</span>
-          </router-link>
-        </li>
-
         <!-- Questions Section -->
         <li class="nav-item">
           <div class="nav-section-title">Questions</div>
         </li>
         <li class="nav-item">
-          <router-link to="/questions/create" class="nav-link">
-            <i class="pi pi-plus nav-icon"></i>
+          <router-link to="/questions/create" class="nav-link nav-link-indent">
             <span class="nav-label">Create Questions</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/questions/history" class="nav-link">
-            <i class="pi pi-history nav-icon"></i>
+          <router-link to="/questions/history" class="nav-link nav-link-indent">
             <span class="nav-label">Question History</span>
           </router-link>
         </li>
@@ -42,8 +32,7 @@
           <div class="nav-section-title">Groups</div>
         </li>
         <li class="nav-item">
-          <router-link to="/groups" class="nav-link">
-            <i class="pi pi-users nav-icon"></i>
+          <router-link to="/groups" class="nav-link nav-link-indent">
             <span class="nav-label">Group Management</span>
           </router-link>
         </li>
@@ -280,6 +269,14 @@ defineExpose({
   background-color: color-mix(in srgb,var(--p-surface-50) calc(100%*var(--tw-bg-opacity, 1)),transparent);
   color: #475569;
   border-right: 3px solid #475569;
+}
+
+.nav-link-indent {
+  padding-left: 2.5rem; /* 아이콘 + gap 만큼 들여쓰기 (1rem + 0.75rem + 0.75rem) */
+}
+
+.sidebar.collapsed .nav-link-indent {
+  padding-left: 0.75rem; /* collapsed 상태에서는 일반 padding */
 }
 
 .nav-icon {
