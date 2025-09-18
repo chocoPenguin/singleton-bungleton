@@ -24,7 +24,8 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db)):
         name=group.name,
         language=group.language,
         memo=group.memo,
-        description=group.description
+        description=group.description,
+        author_id=group.author_id
     )
     db.add(db_group)
     db.commit()
@@ -36,6 +37,13 @@ def create_group(group: GroupCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[GroupResponse])
 def list_groups(db: Session = Depends(get_db)):
     db_groups = db.query(Group).all()
+    return [GroupResponse.model_validate(g) for g in db_groups]
+
+
+# READ: retrieve groups by author
+@router.get("/author/{author_id}", response_model=list[GroupResponse])
+def get_groups_by_author(author_id: int, db: Session = Depends(get_db)):
+    db_groups = db.query(Group).filter(Group.author_id == author_id).all()
     return [GroupResponse.model_validate(g) for g in db_groups]
 
 
@@ -84,6 +92,8 @@ def update_group(group_id: int, group: GroupUpdate, db: Session = Depends(get_db
         db_group.memo = group.memo
     if group.description is not None:
         db_group.description = group.description
+    if group.author_id is not None:
+        db_group.author_id = group.author_id
 
     db.commit()
     db.refresh(db_group)
