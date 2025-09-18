@@ -5,7 +5,10 @@
       <div class="header-container">
         <!-- 로고/브랜드 -->
         <div class="brand">
-          <h2 class="brand-title">Qraft</h2>
+          <router-link to="/" class="brand-link">
+            <h2 class="brand-title-1">Q</h2>
+            <h2 class="brand-title-2">raft</h2>
+          </router-link>
         </div>
 
         <!-- 네비게이션 메뉴 -->
@@ -114,10 +117,19 @@ const logout = () => {
   display: flex;
   flex-direction: column;
 }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+@font-face {
+    font-family: 'YeogiOttaeJalnan';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.2/JalnanOTF00.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+}
 
 /* 헤더 스타일 */
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+background: linear-gradient(135deg, #CDFADB 0%, #F6FDC3 2%, #FFCF96 5%, #FF8080 10%, #FF8080 97%, #FFCF96 100%);
+  /* background: linear-gradient(135deg, #CCE0AC 0%, #F0EAAC 2%, #F4DEB3 5%, #FF8A8A 10%, #FF8A8A 97%, #F4DEB3 100%); */
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   /* background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);  */
   /* background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);  */
   /* background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);  */
@@ -128,12 +140,13 @@ const logout = () => {
   position: sticky;
   top: 0;
   z-index: 1000;
+  font-family: 'Inter';
 }
 
 .header-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -141,11 +154,43 @@ const logout = () => {
 }
 
 /* 브랜드/로고 */
-.brand-title {
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.brand-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  padding: 0.2rem;
+  border-radius: 0.375rem;
+}
+
+.brand-link:hover {
+  background: rgba(255, 255, 255, 0.0);
+}
+
+.brand-title-1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1E293B;
+  font-family: 'YeogiOttaeJalnan';
+}
+
+.brand-title-2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: white;
+  color: #1E293B;
+  font-family: 'YeogiOttaeJalnan';
 }
 
 /* 네비게이션 메뉴 */
@@ -169,9 +214,9 @@ const logout = () => {
 }
 
 .nav-link {
-  color: white;
+  color: #B91C1C;
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  padding: 1rem 1rem;
   border-radius: 0.375rem;
   transition: all 0.2s;
   font-weight: 500;
@@ -179,12 +224,12 @@ const logout = () => {
 
 .nav-link:hover {
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: #7F1D1D;
 }
 
 .nav-link.router-link-active {
   background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: #7F1D1D;
 }
 
 /* 사용자 메뉴 */
