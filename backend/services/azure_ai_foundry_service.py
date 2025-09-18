@@ -447,6 +447,122 @@ class QuizGenerationService(BaseAIFoundryService):
         print("All questions validated successfully.")
         return True
 
+class QuizFeedbackService(BaseAIFoundryService):
+    """Quiz generation service using AI Foundry Agent"""
+
+    def __init__(self):
+        super().__init__()
+
+    def build_feedback_prompt(self, answer: Dict[str, Any]) -> str:
+        """Build prompt for feedback generation based on quiz answers"""
+
+        prompt = f"""퀴즈 결과를 채점한 후, 피드백을 남겨주세요.
+
+**사용자 답변 양식:**
+- 질문 ID별로 구분되며, 각 ID는 다음 정보를 포함합니다:
+  - "answer": 사용자가 입력한 답변
+  - "question": 문제 내용
+  - "max_score": 해당 문제의 배점
+
+**사용자의 답변:**
+{json.dumps(answer, ensure_ascii=False, indent=2)}
+
+**채점 요청사항:**
+1. 각 문제에 대해 정확도를 평가하여 0~max_score 사이의 점수를 부여하세요.
+2. 각 답변에 대한 구체적인 피드백을 제공하세요.
+3. 전체적인 평가와 개선사항을 제시하세요.
+
+**응답 형식 (JSON):**
+응답은 반드시 다음 JSON 형식으로 반환해주세요:
+{{
+  "문제ID": {{
+    "score": 점수,
+    "feedback": "피드백 내용"
+  }},
+  "0": {{
+    "total_score": 총점,
+    "overall_feedback": "전체적인 평가 및 개선사항"
+  }}
+}}
+
+다른 설명 없이 JSON 객체만 반환해주세요."""
+
+        print(f"[DEBUG] Generated feedback prompt:")
+        print(f"[DEBUG] {prompt}")
+        print(f"[DEBUG] End of prompt")
+
+        return prompt
+
+    async def generate_feedback(self, answer: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate quiz using AI Foundry Agent following ai-foundry-agent.md"""
+        try:
+            # Get agent ID from settings
+            agent_id = settings.ai_foundry_agent_id
+            if not agent_id:
+                return {"error": "AI Foundry agent ID not configured"}
+
+            print(f"Using AI Foundry Agent API")
+            print(f"Agent ID: {agent_id}")
+
+            # Build prompt
+            prompt = self.build_feedback_prompt(answer)
+            print(f"Sending prompt to AI Foundry agent: {prompt[:100]}...")
+
+            # Call agent following 5-step pattern
+            ai_response = await self.call_agent(agent_id, prompt)
+
+            if not ai_response:
+                return {"error": "Failed to get response from AI Foundry agent"}
+
+            print(f"AI response received: {ai_response[:200]}...")
+
+            # Extract quiz data from AI response
+            quiz_data = self.extract_feedback_from_response(ai_response)
+
+            if "error" in quiz_data:
+                print(f"Quiz extraction error: {quiz_data['error']}")
+            else:
+                print(f"Successfully extracted {len(quiz_data.get('questions', []))} questions")
+
+            return quiz_data
+
+        except Exception as e:
+            print(f"Error generating quiz: {str(e)}")
+            return {"error": f"Error generating quiz: {str(e)}"}
+
+    def extract_feedback_from_response(self, ai_response: str) -> Dict[str, Any]:
+        """Extract quiz JSON from AI response text"""
+        try:
+            # Remove markdown code blocks if present
+            if "```json" in ai_response:
+                start = ai_response.find("```json") + 7
+                end = ai_response.find("```", start)
+                if end != -1:
+                    ai_response = ai_response[start:end].strip()
+            elif "```" in ai_response:
+                start = ai_response.find("```") + 3
+                end = ai_response.find("```", start)
+                if end != -1:
+                    ai_response = ai_response[start:end].strip()
+
+            # Try to find JSON object in the text
+            json_start = ai_response.find("{")
+            json_end = ai_response.rfind("}") + 1
+
+            if json_start != -1 and json_end > json_start:
+                json_text = ai_response[json_start:json_end]
+                quiz_data = json.loads(json_text)
+                return quiz_data
+            else:
+                # Try parsing the entire text
+                quiz_data = json.loads(ai_response)
+                return quiz_data
+
+        except json.JSONDecodeError as e:
+            return {"error": f"Invalid JSON response: {str(e)}", "raw_response": ai_response}
+        except Exception as e:
+            return {"error": f"Error parsing response: {str(e)}", "raw_response": ai_response}
+
 
 # Legacy class name for backward compatibility
 class AzureAIFoundryService(QuizGenerationService):

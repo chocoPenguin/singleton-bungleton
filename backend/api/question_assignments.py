@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models.question_assignment import QuestionAssignment, QuestionAssignmentCreate, QuestionAssignmentResponse
 from models.question import Question, QuestionResponse
-from typing import Optional, List
+from services.feedback_service import get_feedback_service
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
 import json
 
 router = APIRouter()
@@ -76,7 +78,7 @@ def get_assignment_with_questions(
     return [
       QuestionResponse(
           id=q[1].id,
-          resource_id=q[1].resource_id,
+          resource_id=q[1].resource_id if q[1].resource_id else 0,
           type=q[1].type,  # 추가
           question=q[1].question,
           choices=json.loads(q[1].choices) if q[1].choices else [],
@@ -85,3 +87,41 @@ def get_assignment_with_questions(
       for q in results
     ]
 
+# Pydantic models for quiz feedback
+class FeedbackRequest(BaseModel):
+    answers: Dict[str, Any]
+
+@router.post("/quiz/submit")
+async def process_quiz_result(request: FeedbackRequest, db: Session = Depends(get_db)):
+    """
+    Generate quiz using Microsoft Copilot Studio AI Agent
+    """
+    try:
+        print(request)
+        feedback_service = get_feedback_service(db)
+
+        result = await feedback_service.generate_feedback_from_ai(
+            answer=request.answers
+        )
+
+        if not result.get("success", False):
+            raise HTTPException(
+                status_code=400,
+                detail=result.get("error", "Failed to generate quiz")
+            )
+
+#         return {
+#             "message": "Quiz generated successfully",
+#             "question_set_id": result["question_set_id"],
+#             "questions_created": result["questions_created"],
+#             "data": result["data"]
+#        }
+
+    except Exception as e:
+       import traceback
+       print(f"Generate feedback error: {str(e)}")
+       print(f"Traceback: {traceback.format_exc()}")
+       raise HTTPException(
+           status_code=500,
+           detail=f"Internal server error: {str(e)}"
+       )

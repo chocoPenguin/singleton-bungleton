@@ -125,6 +125,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useRoute } from 'vue-router';
+import axios from '@/utils/axiosConfig';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
@@ -229,7 +230,6 @@ const fetchQuestions = async () => {
     const baseUrl = "http://localhost:8000";
     const url = `${baseUrl}/api/question_assignments/quiz/list?${params.toString()}`
     const response = await fetch(url);
-    console.log(response);
     const data = await response.json();
 
     // 백엔드 데이터를 프론트엔드 형식에 맞게 변환
@@ -271,8 +271,12 @@ const fetchQuestions = async () => {
 
 // 이벤트 핸들러들
 const handleAnswer = (data) => {
-  answers.value[data.questionId] = data.answer;
-  console.log('답변 저장:', data);
+  const question = questions.value.find(q => q.id === data.questionId);
+  answers.value[data.questionId] = {
+    answer: data.answer,
+    question: question?.question,
+    max_score: question?.max_score
+  };
 };
 
 // 페이지 네비게이션
@@ -304,19 +308,12 @@ const completeQuiz = () => {
 
 const submitAnswers = async () => {
   try {
-    const response = await fetch('/api/quiz/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        answers: answers.value
-      })
+    const response = await axios.post('/question_assignments/quiz/submit', {
+      answers: answers.value
     });
 
-    const result = await response.json();
-    console.log('제출 결과:', result);
-
+    console.log('제출 결과:', response.data);
+    
   } catch (error) {
     console.error('답변 제출 실패:', error);
   }
