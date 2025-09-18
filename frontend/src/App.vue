@@ -89,9 +89,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 import AuthModal from './components/AuthModal.vue';
+
+const router = useRouter();
+const toast = useToast();
 
 // 반응형 데이터
 const showUserMenu = ref(false);
@@ -141,6 +146,15 @@ const logout = () => {
   localStorage.removeItem('token');
   isLoggedIn.value = false;
   showUserMenu.value = false;
+
+  toast.add({
+    severity: 'info',
+    summary: '로그아웃',
+    detail: '성공적으로 로그아웃되었습니다.',
+    life: 3000
+  });
+
+  router.push('/');
   console.log('Logged out');
 };
 
