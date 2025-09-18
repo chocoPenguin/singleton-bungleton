@@ -31,17 +31,17 @@
 
         <!-- 사용자 메뉴 -->
         <div class="user-menu">
-          <Button 
-            icon="pi pi-user" 
-            severity="secondary" 
-            text 
-            rounded 
+          <Button
+            icon="pi pi-user"
+            severity="secondary"
+            text
+            rounded
             class="user-button"
-            @click="toggleUserMenu"
+            @click="handleUserButtonClick"
           />
-          
-          <!-- 드롭다운 메뉴 (옵션) -->
-          <div v-if="showUserMenu" class="user-dropdown">
+
+          <!-- 드롭다운 메뉴 (로그인된 경우에만 표시) -->
+          <div v-if="showUserMenu && isLoggedIn" class="user-dropdown">
             <ul>
               <li><a href="#" @click="goToProfile">Profile</a></li>
               <li><a href="#" @click="logout">Logout</a></li>
@@ -75,16 +75,45 @@
     <footer class="app-footer">
       <p>&copy; 2024 Quiz App. All rights reserved.</p>
     </footer>
+
+    <!-- 인증 모달 -->
+    <AuthModal
+      v-model:visible="showAuthModal"
+      @login-success="onLoginSuccess"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
+import AuthModal from './components/AuthModal.vue';
 
 // 반응형 데이터
 const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
+const showAuthModal = ref(false);
+const isLoggedIn = ref(false);
+
+// 로그인 상태 체크
+const checkAuthStatus = () => {
+  const token = localStorage.getItem('token');
+  isLoggedIn.value = !!token;
+};
+
+// 컴포넌트가 마운트될 때 로그인 상태 체크
+onMounted(() => {
+  checkAuthStatus();
+});
+
+// 사용자 버튼 클릭 핸들러
+const handleUserButtonClick = () => {
+  if (isLoggedIn.value) {
+    toggleUserMenu();
+  } else {
+    showAuthModal.value = true;
+  }
+};
 
 // 메서드들
 const toggleUserMenu = () => {
@@ -105,7 +134,14 @@ const goToProfile = () => {
 };
 
 const logout = () => {
-  console.log('Logout');
+  localStorage.removeItem('token');
+  isLoggedIn.value = false;
+  showUserMenu.value = false;
+  console.log('Logged out');
+};
+
+const onLoginSuccess = () => {
+  checkAuthStatus();
   showUserMenu.value = false;
 };
 </script>
