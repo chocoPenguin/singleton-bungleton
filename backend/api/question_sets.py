@@ -134,6 +134,8 @@ class QuizGenerateRequest(BaseModel):
     group_id: int
     author_id: int
     num_questions: int
+    language: str
+    difficulty: str
     description: str
     resource_id: Optional[int] = None
 
@@ -150,6 +152,8 @@ async def generate_quiz(request: QuizGenerateRequest, db: Session = Depends(get_
         result = await quiz_service.generate_quiz_from_ai(
             group_id=request.group_id,
             num_questions=request.num_questions,
+            language=request.language,
+            difficulty=request.difficulty,
             description=request.description,
             author_id=request.author_id,
             resource_id=request.resource_id

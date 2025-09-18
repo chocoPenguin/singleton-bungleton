@@ -121,9 +121,6 @@
             class="submit-button"
             size="large"
           />
-          <small v-if="isSubmitting" class="loading-message">
-            시간이 다소 소요될 수 있습니다. 잠시만 기다려 주세요.
-          </small>
         </div>
       </form>
     </div>
@@ -272,19 +269,14 @@ const handleSubmit = async () => {
       throw new Error('User authentication required');
     }
 
-    // Build description from form fields
-    const description = `
-Language: ${form.value.language}
-Difficulty: ${form.value.difficulty}
-${form.value.instructions ? 'Instructions: ' + form.value.instructions.trim() : ''}
-    `.trim();
-
     // Prepare quiz generation data for AI Foundry Agent
     const quizData = {
       group_id: form.value.selectedGroup,
       author_id: currentUser.id,
       num_questions: form.value.questionsPerPerson,
-      description: description,
+      language: form.value.language,
+      difficulty: form.value.difficulty,
+      description: form.value.instructions.trim(),
       resource_id: null // Optional
     };
 
