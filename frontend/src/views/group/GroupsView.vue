@@ -312,10 +312,13 @@ const fetchGroupMembers = async (groupId) => {
 };
 
 // 그룹 목록으로 돌아가기
-const backToGroupList = () => {
+const backToGroupList = async () => {
   currentView.value = 'list';
   selectedGroup.value = null;
   groupMembers.value = [];
+
+  // 그룹 목록 새로고침 (멤버 수 업데이트)
+  await fetchGroups();
 };
 
 // 역할 severity 반환
@@ -409,15 +412,15 @@ const handleSaveMember = async (memberData) => {
         life: 3000
       });
     } else {
-      // Create new user and add to group
+      // Create new user with group_id
       const newUser = await createUser({
         name: memberData.name,
         email: memberData.email,
-        role: memberData.role
+        role: memberData.role,
+        group_id: selectedGroup.value.id
       });
 
-      // Add user to current group
-      await addUserToGroup(selectedGroup.value.id, newUser.data.id);
+      // 사용자가 이미 그룹에 연결되어 생성되므로 addUserToGroup 호출 불필요
 
       toast.add({
         severity: 'success',
