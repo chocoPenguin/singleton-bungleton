@@ -143,8 +143,8 @@ const handleLogin = async () => {
     emit('login-success');
     isVisible.value = false;
 
-    // Navigate to quiz page after login
-    router.push("/quiz");
+    // Navigate to home page after login
+    router.push("/");
   } catch (err) {
     console.error(err);
     toast.add({
