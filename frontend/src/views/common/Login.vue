@@ -56,8 +56,7 @@ export default {
         localStorage.setItem("token", response.data.access_token);
         this.$router.push("/dashboard");
       } catch (err) {
-        console.log(err)
-        alert("Login failure: " + (err.response?.data?.detail || err.message));
+        alert("Login failure!");
       }
     },
     async handleRegister() {
@@ -71,7 +70,7 @@ export default {
         alert("Successfully registered! Please log in.");
         console.log(response.data);
       } catch (err) {
-        alert("Register failed: " + (err.response?.data?.detail || err.message));
+        alert("Register failed: " + err.message);
       }
     },
   },
