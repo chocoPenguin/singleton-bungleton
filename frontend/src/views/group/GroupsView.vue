@@ -159,7 +159,7 @@ import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
-import { getAllGroups, createGroup, updateGroup, deleteGroup as deleteGroupAPI } from '../../api/groups.js';
+import { getAllGroups, createGroup, updateGroup, deleteGroup as deleteGroupAPI, getGroupsByAuthor } from '../../api/groups.js';
 import { getUsersByGroup, getCurrentUser, createUser, addUserToGroup, getAllUsers, deleteUser } from '../../api/users.js';
 import { getAllAuthors } from '../../api/auth.js';
 import { getCurrentUserFromToken, getUserIdFromToken } from '../../utils/auth.js';
@@ -211,8 +211,24 @@ const fetchCurrentUser = async () => {
 const fetchGroups = async () => {
   loading.value = true;
   try {
-    // 실제 API 호출
-    const response = await getAllGroups();
+    let response;
+
+    // 현재 사용자의 그룹만 조회
+    const allAuthorsResponse = await getAllAuthors();
+    const currentUserInfo = getCurrentUserFromToken();
+    console.log('Current user info:', currentUserInfo);
+
+    const currentAuthor = allAuthorsResponse.data.find(author => author.email === currentUserInfo.email);
+    console.log('Found current author:', currentAuthor);
+
+    if (currentAuthor) {
+      // 현재 author의 그룹만 조회
+      response = await getGroupsByAuthor(currentAuthor.id);
+      console.log('Groups for current author:', response.data);
+    } else {
+      console.warn('Current author not found, showing all groups');
+      response = await getAllGroups();
+    }
 
     console.log('Groups API response:', response.data); // 디버깅용
 
@@ -371,24 +387,44 @@ const handleSaveGroup = async (groupData) => {
       }
 
       // 현재 사용자의 이메일과 매칭되는 author ID 찾기
+      console.log('User info for group creation:', userInfo);
+
       const allAuthorsResponse = await getAllAuthors();
-      const currentAuthor = allAuthorsResponse.data.find(author => author.email === userInfo.email);
+      console.log('All authors response:', allAuthorsResponse.data);
+
+      const currentAuthor = allAuthorsResponse.data.find(author => {
+        console.log('Comparing author email:', author.email, 'with user email:', userInfo.email);
+        return author.email === userInfo.email;
+      });
+
+      console.log('Found current author:', currentAuthor);
 
       if (!currentAuthor) {
-        throw new Error('Current author not found in database');
+        console.error('Current author not found in database');
+        // author_id 없이 그룹 생성 시도 (백엔드에서 처리하도록)
+        const payload = {
+          name: groupData.name,
+          language: groupData.language,
+          memo: groupData.memo || '',
+          author_email: userInfo.email // email로 전송
+        };
+        console.log('Creating group with email fallback:', payload);
+        await createGroup(payload);
+      } else {
+        const authorId = currentAuthor.id;
+        const payload = {
+          name: groupData.name,
+          language: groupData.language,
+          memo: groupData.memo || '',
+          author_id: authorId
+        };
+
+        console.log('Creating group with payload:', payload);
+        console.log('Current author ID:', authorId);
+        console.log('Current author info:', currentAuthor);
+
+        await createGroup(payload);
       }
-
-      const authorId = currentAuthor.id;
-
-      const payload = {
-        name: groupData.name,
-        language: groupData.language,
-        memo: groupData.memo || '',
-        author_id: authorId
-      };
-
-      console.log('Creating group with payload:', payload); // 디버깅용
-      await createGroup(payload);
       toast.add({
         severity: 'success',
         summary: 'Success',
