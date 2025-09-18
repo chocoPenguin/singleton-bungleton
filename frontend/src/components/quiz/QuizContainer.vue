@@ -3,7 +3,7 @@
     <!-- 로딩 상태 -->
     <div v-if="loading" class="text-center p-4">
       <ProgressSpinner />
-      <p class="mt-3">문제를 불러오는 중...</p>
+      <p class="mt-3">Loading...</p>
     </div>
 
     <!-- 문제 표시 -->
@@ -11,8 +11,7 @@
       <!-- 전체 진행률 표시 -->
       <div class="progress-section mb-4">
         <div class="flex justify-content-between align-items-center mb-2">
-          <h3>전체 진행률</h3>
-          <span class="text-sm text-500">{{ Object.keys(answers).length }} / {{ questions.length }} 완료</span>
+          <span class="text-sm text-500">{{ Object.keys(answers).length }} / {{ questions.length }}</span>
         </div>
         <ProgressBar :value="progressPercentage" class="mb-2" />
       </div>
@@ -25,13 +24,8 @@
           class="question-item mb-4"
         >
           <!-- 문제 번호 표시 -->
-          <div class="question-header mb-3 p-2 bg-primary-50 border-round flex align-items-center">
+          <div style="padding: 0.5rem 0" class="question-header mb-3 p-2 bg-primary-50 border-round flex align-items-center">
             <Badge :value="(currentPage * questionsPerPage) + index + 1" severity="info" class="mr-2" />
-            <span style="padding: 0 0.5rem" class="font-semibold text-primary">문제 {{ (currentPage * questionsPerPage) + index + 1 }}</span>
-            <div class="ml-auto">
-              <i v-if="answers[question.id]" class="pi pi-check-circle text-green-500 text-xl"></i>
-              <i v-else class="pi pi-circle text-gray-300 text-xl"></i>
-            </div>
           </div>
 
           <!-- 객관식 문제 -->
@@ -75,53 +69,33 @@
 
       <!-- 네비게이션 버튼 -->
       <div class="navigation-controls mt-4">
-        <!-- 페이지 완료 확인 -->
-        <div class="page-summary mb-4 p-3 bg-blue-50 border-round">
-          <div class="flex justify-content-between align-items-center">
-            <div>
-              <h5 class="m-0 text-blue-900">페이지 {{ currentPage + 1 }} 완료 상태</h5>
-              <small class="text-blue-600">
-                {{ currentPageQuestions.filter(q => answers[q.id]).length }} / {{ currentPageQuestions.length }} 문제 완료
-              </small>
-            </div>
-            <div>
-              <i v-if="currentPageAnswered" class="pi pi-check-circle text-green-500 text-2xl"></i>
-              <i v-else class="pi pi-clock text-orange-500 text-2xl"></i>
-            </div>
-          </div>
-        </div>
 
         <!-- 페이지 네비게이션 -->
         <div class="page-nav flex justify-content-between align-items-center p-3 bg-gray-50 border-round">
           <Button
-            label="이전 페이지"
+            label="Prev Page"
             severity="secondary"
-            icon="pi pi-chevron-left"
             :disabled="currentPage === 0"
             @click="goToPreviousPage"
           />
 
           <div class="flex align-items-center gap-3">
             <div class="text-center">
-              <div class="text-sm text-500">페이지</div>
               <div class="font-bold">{{ currentPage + 1 }} / {{ totalPages }}</div>
             </div>
           </div>
 
           <div class="flex gap-2">
-            <Button style="background-color: #FFCF96; border: none; color: #374151;"
+            <Button
               v-if="currentPage < totalPages - 1"
-              label="다음 페이지"
+              label="Next Page"
               severity="primary"
-              icon="pi pi-chevron-right"
-              iconPos="right"
               @click="goToNextPage"
             />
-            <Button style="background-color: #FF8080; border: none"
+            <Button
               v-if="currentPage === totalPages - 1"
-              label="퀴즈 완료"
+              label="Finish"
               severity="success"
-              icon="pi pi-check"
               @click="completeQuiz"
               :disabled="!allQuestionsAnswered"
             />
@@ -140,7 +114,7 @@
     <!-- 퀴즈 완료 -->
     <div v-if="isCompleted" class="completion-screen text-center p-4">
       <i class="pi pi-check-circle text-6xl text-green-500 mb-4"></i>
-      <h2>퀴즈 완료!</h2>
+      <h2>Completed!</h2>
       <p class="mb-4">모든 문제를 완료했습니다.</p>
       <Button label="결과 보기" @click="showResults" />
     </div>
@@ -150,6 +124,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { useRoute } from 'vue-router';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
@@ -159,6 +134,7 @@ import MultipleChoiceQuestion from './MultipleChoiceQuestion.vue';
 import SubjectiveQuestion from './SubjectiveQuestion.vue';
 
 const toast = useToast();
+const route = useRoute();
 
 // 반응형 데이터
 const questions = ref([]);
@@ -243,8 +219,17 @@ const fetchQuestions = async () => {
     // ];
 
     // 실제 API 호출은 주석 처리 (나중에 사용)
+    const userId = route.query.user_id;
+    const questionSetId = route.query.question_set_id;
 
-    const response = await fetch('http://localhost:8080/api/questions');
+    const params = new URLSearchParams();
+    if (userId) params.append('user_id', userId);
+    if (questionSetId) params.append('question_set_id', questionSetId);
+
+    const baseUrl = "http://localhost:8000";
+    const url = `${baseUrl}/api/question_assignments/quiz/list?${params.toString()}`
+    const response = await fetch(url);
+    console.log(response);
     const data = await response.json();
 
     // 백엔드 데이터를 프론트엔드 형식에 맞게 변환
@@ -253,6 +238,7 @@ const fetchQuestions = async () => {
       Type: q.type, // 백엔드 'type' -> 프론트엔드 'Type'
       question: q.question,
       choices: q.choices,
+      max_score: q.max_score
     }));
   } catch (error) {
     console.error('문제 로딩 실패:', error);

@@ -5,15 +5,18 @@
                 <p class="question-text mb-4">
                     {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
-                
+              <div class="question_max_score">
+                score: {{ question.max_score }}
+              </div>
                 <div class="choices-container">
                     <div 
                         v-for="(choice, index) in choices" 
                         :key="index"
                         class="choice-item mb-3"
+                        style="margin: 0.5rem"
                     >
                         <div class="flex align-items-center">
-                            <RadioButton 
+                            <RadioButton
                                 :inputId="`choice-${index}`"
                                 :name="questionId"
                                 :value="choice.value"
@@ -118,8 +121,7 @@ const submitAnswer = () => {
     padding: 0 0.5rem;
 }
 
-.quiz-actions {
-    border-top: 1px solid var(--surface-border);
-    padding-top: 1rem;
+.question_max_score{
+    text-align: right;
 }
 </style>

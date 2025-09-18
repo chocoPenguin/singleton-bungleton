@@ -5,6 +5,9 @@
                 <p class="question-text mb-4">
                     {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
+                <div class="question_max_score">
+                  score: {{ question.max_score }}
+                </div>
                 
                 <div class="answer-container mb-4">
                     
@@ -63,7 +66,7 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: '답변을 입력해주세요.'
+        default: 'Enter here.'
     },
     maxLength: {
         type: Number,
@@ -125,11 +128,6 @@ const submitAnswer = () => {
     background-color: var(--surface-50);
 }
 
-.quiz-actions {
-    border-top: 1px solid var(--surface-border);
-    padding-top: 1rem;
-}
-
 /* InputText와 Textarea 커스텀 스타일 */
 :deep(.p-inputtext),
 :deep(.p-inputtextarea) {
@@ -146,5 +144,9 @@ const submitAnswer = () => {
 .text-500 {
     color: var(--text-color-secondary);
     font-size: 0.875rem;
+}
+
+.question_max_score{
+  text-align: right;
 }
 </style>
