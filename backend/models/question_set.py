@@ -14,7 +14,9 @@ class QuestionSet(Base):
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)        # group
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)          # user
     num_questions = Column(Integer, nullable=True)                            # number of quiz questions
-    description = Column(Text, nullable=True)                                 # quiz requirements (difficulty, type, etc.)
+    language = Column(String(50), nullable=True)                              # language
+    difficulty = Column(String(50), nullable=True)                            # difficulty
+    description = Column(Text, nullable=True)                                 # quiz requirements (instructions)
     expires_at = Column(DateTime, nullable=True)                              # expiration datetime
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -33,6 +35,8 @@ class QuestionSetCreate(BaseModel):
     group_id: Optional[int] = None
     user_id: Optional[int] = None
     num_questions: Optional[int] = None
+    language: Optional[str] = None
+    difficulty: Optional[str] = None
     description: Optional[str] = None
     expires_at: Optional[datetime] = None
 
@@ -43,11 +47,44 @@ class QuestionSetResponse(BaseModel):
     group_id: Optional[int] = None
     user_id: Optional[int] = None
     num_questions: Optional[int] = None
+    language: Optional[str] = None
+    difficulty: Optional[str] = None
     description: Optional[str] = None
     expires_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    # Relationship fields
+    author: Optional['AuthorResponse'] = None
+    group: Optional['GroupResponse'] = None
+    resource: Optional['ResourceResponse'] = None
 
     # Add a field to hold the total number of users
     total_users: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+# Response models for relationships
+class AuthorResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class GroupResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class ResourceResponse(BaseModel):
+    id: int
+    name: str
 
     class Config:
         from_attributes = True

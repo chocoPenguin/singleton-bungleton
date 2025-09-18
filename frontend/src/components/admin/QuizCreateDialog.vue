@@ -31,6 +31,7 @@
           </label>
           <Dropdown
             name="group_id"
+            v-model="formData.group_id"
             :options="groups"
             optionLabel="name"
             optionValue="id"
@@ -57,6 +58,7 @@
           </label>
           <InputNumber
             name="author_id"
+            v-model="formData.author_id"
             placeholder="작성자 ID를 입력하세요"
             fluid
             :min="1"
@@ -79,6 +81,7 @@
           </label>
           <InputNumber
             name="num_questions"
+            v-model="formData.num_questions"
             placeholder="생성할 문제 수"
             fluid
             :min="1"
@@ -101,6 +104,52 @@
           </Message>
         </div>
 
+        <!-- 언어 선택 -->
+        <div class="form-field">
+          <label for="language" class="field-label">
+            <i class="pi pi-globe mr-1"></i>
+            언어 *
+          </label>
+          <Dropdown
+            name="language"
+            v-model="formData.language"
+            :options="['ko', 'en']"
+            placeholder="언어를 선택하세요"
+            fluid
+          />
+          <Message
+            v-if="$form.language?.invalid"
+            severity="error"
+            size="small"
+            variant="simple"
+          >
+            {{ $form.language.error?.message }}
+          </Message>
+        </div>
+
+        <!-- 난이도 선택 -->
+        <div class="form-field">
+          <label for="difficulty" class="field-label">
+            <i class="pi pi-sliders-h mr-1"></i>
+            난이도 *
+          </label>
+          <Dropdown
+            name="difficulty"
+            v-model="formData.difficulty"
+            :options="['상', '중', '하']"
+            placeholder="난이도를 선택하세요"
+            fluid
+          />
+          <Message
+            v-if="$form.difficulty?.invalid"
+            severity="error"
+            size="small"
+            variant="simple"
+          >
+            {{ $form.difficulty.error?.message }}
+          </Message>
+        </div>
+
         <!-- 설명/요구사항 -->
         <div class="form-field">
           <label for="description" class="field-label">
@@ -109,6 +158,7 @@
           </label>
           <Textarea
             name="description"
+            v-model="formData.description"
             rows="4"
             placeholder="예: 중급 난이도의 객관식 문제, 업무 프로세스 중심"
             fluid
@@ -135,6 +185,7 @@
           </label>
           <InputNumber
             name="resource_id"
+            v-model="formData.resource_id"
             placeholder="참고할 자료 ID (선택사항)"
             fluid
             :min="1"
@@ -234,6 +285,8 @@ const initialValues = ref({
   group_id: null,
   author_id: 1, // 임시 기본값
   num_questions: 5,
+  language: 'ko',
+  difficulty: '중',
   description: '',
   resource_id: null
 });
@@ -246,6 +299,8 @@ const resolver = ref(zodResolver(
     num_questions: z.number()
       .min(1, { message: '최소 1개의 문제가 필요합니다.' })
       .max(50, { message: '최대 50개까지 생성 가능합니다.' }),
+    language: z.string(),
+    difficulty: z.string(),
     description: z.string()
       .min(10, { message: '최소 10자 이상 입력해주세요.' })
       .max(1000, { message: '최대 1000자까지 입력 가능합니다.' }),
@@ -289,9 +344,14 @@ const createQuiz = async (formData) => {
       group_id: formData.group_id,
       author_id: formData.author_id,
       num_questions: formData.num_questions,
+      language: formData.language,
+      difficulty: formData.difficulty,
       description: formData.description,
       resource_id: formData.resource_id || undefined
     };
+
+    // 디버깅을 위해 콘솔에 전송될 데이터 출력
+    console.log("API 요청 데이터:", JSON.stringify(requestData, null, 2));
 
     const response = await fetch('http://localhost:8000/api/question_sets/generate', {
       method: 'POST',
@@ -316,12 +376,12 @@ const createQuiz = async (formData) => {
 };
 
 // 이벤트 핸들러들
-const onSubmit = async ({ valid, values }) => {
+const onSubmit = async ({ valid }) => {
   if (!valid) return;
 
   submitting.value = true;
   try {
-    const result = await createQuiz(values);
+    const result = await createQuiz(formData.value);
 
     toast.add({
       severity: 'success',

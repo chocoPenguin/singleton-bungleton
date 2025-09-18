@@ -18,6 +18,8 @@ class QuizService:
         self,
         group_id: int,
         num_questions: int,
+        language: str,
+        difficulty: str,
         description: str,
         author_id: int,
         resource_id: Optional[int] = None
@@ -68,6 +70,8 @@ class QuizService:
                 author_id=author_id,
                 resource_id=resource_id,
                 num_questions=num_questions,
+                language=language,
+                difficulty=difficulty,
                 description=description,
                 users_in_group=users_in_group
             )
@@ -91,6 +95,8 @@ class QuizService:
         author_id: int,
         resource_id: Optional[int],
         num_questions: int,
+        language: str,
+        difficulty: str,
         description: str,
         users_in_group: List[User]
     ) -> Dict[str, Any]:
@@ -105,6 +111,8 @@ class QuizService:
                 group_id=group_id,
                 user_id=None,  # Group-based quiz
                 num_questions=num_questions,
+                language=language,
+                difficulty=difficulty,
                 description=description
             )
 
