@@ -1,0 +1,133 @@
+.groups-view {
+  font-family: 'Inter', sans-serif;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+.groups-table {
+  // PrimeVue DataTable
+  ::v-deep(.p-datatable) {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    border-collapse: collapse;
+    border-radius: 30px;
+    width: 100%;
+    background-color: white;
+    color: #1f2937;
+  }
+
+  // Header
+  ::v-deep(.p-datatable-header),
+  ::v-deep(.p-datatable-thead > tr > th) {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+  }
+
+  // Body
+  ::v-deep(.p-datatable-tbody > tr > td) {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+    background-color: white;
+  }
+
+  // Stripe
+  ::v-deep(.p-datatable-tbody > tr:nth-child(even)) {
+    background-color: #f9fafb;
+  }
+
+  // Hover
+  ::v-deep(.p-datatable-tbody > tr:hover) {
+    background-color: #f3f4f6;
+    transition: background-color 0.2s;
+  }
+
+  // Paginator
+  ::v-deep(.p-paginator) {
+    background-color: #ffffff !important;  // ✅ 흰 배경 강제 덮어쓰기
+    padding: 1rem;
+    justify-content: center;
+  }
+
+  ::v-deep(.p-datatable-paginator-bottom) {
+    border-top: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  // Paginator pages styling
+  ::v-deep(.p-paginator .p-paginator-pages .p-paginator-page) {
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+  }
+
+  ::v-deep(.p-paginator .p-paginator-pages .p-paginator-page:hover) {
+    background-color: #f3f4f6;
+    color: #374151;
+  }
+
+  ::v-deep(.p-paginator .p-paginator-pages .p-paginator-page.p-paginator-page-selected) {
+    background: color-mix(in srgb, var(--p-surface-50) calc(100% * var(--tw-bg-opacity, 1)), transparent);
+    color: #475569;
+  }
+
+  // Buttons
+  ::v-deep(.p-button) {
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  // Tag
+  ::v-deep(.p-tag) {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.clickable-group-name {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+  }
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-button {
+  flex-shrink: 0;
+  padding: 0.5rem;
+  color: #6b7280;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+  }
+}

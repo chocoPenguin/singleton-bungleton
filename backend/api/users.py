@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models.user import User, UserCreate, UserResponse
+from models.author import Author, AuthorResponse
+from security import get_current_user
 
 router = APIRouter()
 
@@ -29,6 +31,12 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 def list_users_by_group(group_id: int, db: Session = Depends(get_db)):
     db_users = db.query(User).filter(User.group_id == group_id).all()
     return [UserResponse.from_orm(u) for u in db_users]
+
+
+# READ: get current user info
+@router.get("/me", response_model=AuthorResponse)
+def get_current_user_info(current_user: Author = Depends(get_current_user)):
+    return AuthorResponse.from_orm(current_user)
 
 
 # READ: retrieve single user
