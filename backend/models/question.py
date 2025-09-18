@@ -14,7 +14,7 @@ class Question(Base):
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=True)  # link to Author
     type = Column(String(1), nullable=False, default='M') # M: multiple_choices, S: short subjective, L: Long subjective
     question = Column(Text, nullable=False)
-    choices = Column(Text, nullable=False)  # save JSON as string
+    choices = Column(Text, nullable=True)  # save JSON as string
     answer = Column(Text, nullable=False)
     max_score = Column(Integer, nullable=False, default=10)  # Score assigned to this question
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -28,7 +28,7 @@ class QuestionCreate(BaseModel):
     resource_id: int
     type: str
     question: str
-    choices: List[str]
+    choices: Optional[List[str]] = None
     answer: str
     max_score: int
     author_id: Optional[int] = None

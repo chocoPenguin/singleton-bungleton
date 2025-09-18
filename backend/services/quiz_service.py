@@ -21,6 +21,7 @@ class QuizService:
         language: str,
         difficulty: str,
         description: str,
+        title: str, # Add title parameter here
         author_id: int,
         resource_id: Optional[int] = None
     ) -> Dict[str, Any]:
@@ -36,6 +37,7 @@ class QuizService:
             # Get users in the group
             users_in_group = self.db.query(User).filter(User.group_id == group_id).all()
             user_count = len(users_in_group)
+            print(f"[DEBUG] num_questions: {num_questions}, user_count: {user_count}") # Log added
 
             if user_count == 0:
                 return {"success": False, "error": "No users found in the group"}
@@ -45,10 +47,16 @@ class QuizService:
 
             # Call AI Foundry agent to generate quiz following ai-foundry-agent.md
             async with AzureAIFoundryService() as ai_service:
+                # Add scoring instruction to the description
+                scoring_instruction = f"각 문제의 난이도에 따라 점수를 적절히 배분하여 총 {num_questions}문제의 총점이 100점이 되도록 하세요. 각 문제의 점수를 'max_score' 필드에 포함해주세요."
+                updated_description = f"{description}\n\n{scoring_instruction}"
+
                 quiz_data = await ai_service.generate_quiz(
                     group=group,
                     num_questions=num_questions,
-                    description=description,
+                    language=language,
+                    difficulty=difficulty,
+                    description=updated_description, # Use updated description
                     user_count=user_count
                 )
 
@@ -73,6 +81,7 @@ class QuizService:
                 language=language,
                 difficulty=difficulty,
                 description=description,
+                title=title, # Pass title here
                 users_in_group=users_in_group
             )
 
@@ -98,6 +107,7 @@ class QuizService:
         language: str,
         difficulty: str,
         description: str,
+        title: str, # Add title parameter here
         users_in_group: List[User]
     ) -> Dict[str, Any]:
         """
@@ -113,7 +123,8 @@ class QuizService:
                 num_questions=num_questions,
                 language=language,
                 difficulty=difficulty,
-                description=description
+                description=description,
+                title=title # Use the passed title directly
             )
 
             db_question_set = QuestionSet(**question_set_data.model_dump())
@@ -122,40 +133,47 @@ class QuizService:
 
             created_questions = []
             created_assignments = []
-            total_questions = quiz_data["questions"]
+            total_questions_from_ai = quiz_data["questions"]
+            print(f"[DEBUG] AI returned {len(total_questions_from_ai)} questions.") # Log added
 
-            # 2. Create Questions and Assignments
-            for i, question_data in enumerate(total_questions):
-                # Create Question
+            # 2. Create Questions
+            for question_data in total_questions_from_ai:
+                question_type = question_data.get("type", "M")
                 db_question = Question(
-                    resource_id=resource_id,  # Allow None
+                    resource_id=resource_id,
                     author_id=author_id,
-                    type='M',  # Multiple choice
+                    type=question_type,
                     question=question_data["question"],
-                    choices=json.dumps(question_data["choices"]),
+                    choices=json.dumps(question_data["choices"]) if question_data.get("choices") else None,
                     answer=question_data["answer"],
-                    max_score=10  # Default score
+                    max_score=question_data.get("max_score", 10) # Use AI provided score, default to 10
                 )
                 self.db.add(db_question)
-                self.db.flush()  # Get the question ID
+                self.db.flush()
                 created_questions.append(db_question)
 
-                # 3. Create Question Assignments for each user in the group
-                # Distribute questions evenly among users
-                for j, user in enumerate(users_in_group):
-                    # Each user gets different questions (round-robin distribution)
-                    if i % len(users_in_group) == j:
+            # 3. Create Question Assignments for each user, assigning num_questions to each user
+            question_index = 0
+            for user in users_in_group:
+                for _ in range(num_questions): # 각 사용자에게 num_questions 만큼 할당
+                    if question_index < len(created_questions):
+                        db_question = created_questions[question_index]
                         assignment = QuestionAssignment(
                             question_set_id=db_question_set.id,
                             question_id=db_question.id,
                             group_id=group_id,
                             user_id=user.id,
-                            user_answer=None,  # None initially
-                            user_score=None,   # None initially
+                            user_answer=None,
+                            user_score=None,
                             status="assigned"
                         )
                         self.db.add(assignment)
                         created_assignments.append(assignment)
+                        question_index += 1
+                    else:
+                        # AI가 생성한 질문 수가 부족한 경우 (예외 처리 또는 경고)
+                        print(f"[WARNING] Not enough questions generated by AI for user {user.id}. Expected {num_questions}, but only {len(created_questions) - (question_index - _)} available.")
+                        break # 현재 사용자에게 더 이상 할당할 질문이 없으므로 다음 사용자로 넘어감
 
             # Return success response
             return {
@@ -170,14 +188,16 @@ class QuizService:
                         "id": db_question_set.id,
                         "group_id": group_id,
                         "num_questions": num_questions,
+                        "title": db_question_set.title, # Include title here
                         "description": description
                     },
                     "generated_questions": [
                         {
                             "id": q.id,
                             "question": q.question,
-                            "choices": json.loads(q.choices),
-                            "answer": q.answer
+                            "choices": json.loads(q.choices) if q.choices else [],
+                            "answer": q.answer,
+                            "max_score": q.max_score # Include max_score here
                         } for q in created_questions
                     ]
                 }
@@ -224,7 +244,7 @@ class QuizService:
                         questions.append({
                             "id": question.id,
                             "question": question.question,
-                            "choices": json.loads(question.choices),
+                            "choices": json.loads(question.choices) if question.choices else [],
                             "answer": question.answer
                         })
 

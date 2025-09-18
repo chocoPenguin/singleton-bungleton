@@ -277,6 +277,7 @@ const handleSubmit = async () => {
       language: form.value.language,
       difficulty: form.value.difficulty,
       description: form.value.instructions.trim(),
+      title: generateAutoTitle(), // Add title here
       resource_id: null // Optional
     };
 

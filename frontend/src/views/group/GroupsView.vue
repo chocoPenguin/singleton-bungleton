@@ -477,7 +477,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@/assets/styles/datatable.scss';
+@use '@/assets/styles/datatable.scss';
 
 .page-header {
   margin-bottom: 2rem;

@@ -18,8 +18,8 @@
 
       <!-- 현재 페이지의 모든 문제 렌더링 -->
       <div class="questions-list">
-        <div 
-          v-for="(question, index) in currentPageQuestions" 
+        <div
+          v-for="(question, index) in currentPageQuestions"
           :key="question.id"
           class="question-item mb-4"
         >
@@ -162,7 +162,7 @@ const currentQuestion = computed(() => {
 
 const progressPercentage = computed(() => {
   const totalAnswered = Object.keys(answers.value).length;
-  return questions.value.length > 0 
+  return questions.value.length > 0
     ? Math.round((totalAnswered / questions.value.length) * 100)
     : 0;
 });
@@ -185,7 +185,7 @@ const currentPageAnswered = computed(() => {
 // API 호출 함수
 const fetchQuestions = async () => {
   loading.value = true;
-  
+
   try {
     // 개발용 예제 데이터 (20개)
     // questions.value = [
@@ -242,7 +242,7 @@ const fetchQuestions = async () => {
     }));
   } catch (error) {
     console.error('문제 로딩 실패:', error);
-    
+
     // 에러 발생 시에도 예제 데이터 표시
     questions.value = [
       {
@@ -257,7 +257,7 @@ const fetchQuestions = async () => {
         ]
       }
     ];
-    
+
     toast.add({
       severity: 'warn',
       summary: '알림',
@@ -290,10 +290,10 @@ const goToPreviousPage = () => {
 
 const completeQuiz = () => {
   isCompleted.value = true;
-  
+
   // 서버에 답변 제출
   submitAnswers();
-  
+
   toast.add({
     severity: 'success',
     summary: '완료',
@@ -313,10 +313,10 @@ const submitAnswers = async () => {
         answers: answers.value
       })
     });
-    
+
     const result = await response.json();
     console.log('제출 결과:', result);
-    
+
   } catch (error) {
     console.error('답변 제출 실패:', error);
   }
@@ -382,7 +382,7 @@ onMounted(() => {
   .quiz-container {
     padding: 0.5rem;
   }
-  
+
   .navigation-controls {
     flex-direction: column;
     gap: 0.5rem;

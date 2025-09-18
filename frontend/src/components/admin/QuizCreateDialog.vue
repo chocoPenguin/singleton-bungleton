@@ -150,6 +150,28 @@
           </Message>
         </div>
 
+        <!-- 퀴즈 세트 제목 -->
+        <div class="form-field">
+          <label for="title" class="field-label">
+            <i class="pi pi-tag mr-1"></i>
+            퀴즈 세트 제목 *
+          </label>
+          <InputText
+            name="title"
+            v-model="formData.title"
+            placeholder="예: 신입사원 온보딩 퀴즈"
+            fluid
+          />
+          <Message
+            v-if="$form.title?.invalid"
+            severity="error"
+            size="small"
+            variant="simple"
+          >
+            {{ $form.title.error?.message }}
+          </Message>
+        </div>
+
         <!-- 설명/요구사항 -->
         <div class="form-field">
           <label for="description" class="field-label">
@@ -250,6 +272,7 @@ import Dialog from 'primevue/dialog';
 import Form from '@primevue/forms/form';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
@@ -261,6 +284,10 @@ const props = defineProps({
   visible: {
     type: Boolean,
     default: false
+  },
+  title: {
+    type: String,
+    default: ''
   }
 });
 
@@ -287,6 +314,7 @@ const initialValues = ref({
   num_questions: 5,
   language: 'ko',
   difficulty: '중',
+  title: props.title, // Initialize title from prop
   description: '',
   resource_id: null
 });
@@ -301,6 +329,7 @@ const resolver = ref(zodResolver(
       .max(50, { message: '최대 50개까지 생성 가능합니다.' }),
     language: z.string(),
     difficulty: z.string(),
+    title: z.string().min(1, { message: '퀴즈 세트 제목을 입력해주세요.' }).max(255, { message: '최대 255자까지 입력 가능합니다.' }), // Add title validation
     description: z.string()
       .min(10, { message: '최소 10자 이상 입력해주세요.' })
       .max(1000, { message: '최대 1000자까지 입력 가능합니다.' }),
@@ -346,6 +375,7 @@ const createQuiz = async (formData) => {
       num_questions: formData.num_questions,
       language: formData.language,
       difficulty: formData.difficulty,
+      title: formData.title, // Include title here
       description: formData.description,
       resource_id: formData.resource_id || undefined
     };

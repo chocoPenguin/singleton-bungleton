@@ -137,6 +137,7 @@ class QuizGenerateRequest(BaseModel):
     language: str
     difficulty: str
     description: str
+    title: str # Add title here
     resource_id: Optional[int] = None
 
 
@@ -155,6 +156,7 @@ async def generate_quiz(request: QuizGenerateRequest, db: Session = Depends(get_
             language=request.language,
             difficulty=request.difficulty,
             description=request.description,
+            title=request.title, # Pass title here
             author_id=request.author_id,
             resource_id=request.resource_id
         )
