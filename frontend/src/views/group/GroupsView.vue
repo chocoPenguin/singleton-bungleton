@@ -340,16 +340,6 @@ const backToGroupList = async () => {
   await fetchGroups();
 };
 
-// 역할 severity 반환
-const getRoleSeverity = (role) => {
-  switch (role.toLowerCase()) {
-    case 'admin': return 'danger';
-    case 'moderator': return 'warning';
-    case 'member': return 'info';
-    default: return 'secondary';
-  }
-};
-
 // Modal handlers
 const openNewGroup = () => {
   selectedGroupForEdit.value = null;
@@ -435,7 +425,6 @@ const handleSaveMember = async (memberData) => {
       const newUser = await createUser({
         name: memberData.name,
         email: memberData.email,
-        role: memberData.role,
         group_id: selectedGroup.value.id
       });
 
