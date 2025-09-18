@@ -35,6 +35,11 @@
             </template>
           </Column>
           <Column field="description" header="Description"></Column>
+          <Column field="language" header="Language" sortable>
+            <template #body="slotProps">
+              {{ getLanguageLabel(slotProps.data.language) }}
+            </template>
+          </Column>
           <Column field="memberCount" header="Members" sortable>
             <template #body="slotProps">
               {{ slotProps.data.memberCount }}
@@ -147,14 +152,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
-import { getAllGroups, createGroup, updateGroup } from '../../api/groups.js';
-import { getUsersByGroup, getCurrentUser, createUser, addUserToGroup, getAllUsers } from '../../api/users.js';
+import { getAllGroups, createGroup, updateGroup, deleteGroup as deleteGroupAPI } from '../../api/groups.js';
+import { getUsersByGroup, getCurrentUser, createUser, addUserToGroup, getAllUsers, deleteUser } from '../../api/users.js';
 import { getAllAuthors } from '../../api/auth.js';
 import { getCurrentUserFromToken, getUserIdFromToken } from '../../utils/auth.js';
 import GroupModal from '../../components/GroupModal.vue';
@@ -179,6 +185,7 @@ const selectedGroupForEdit = ref(null);
 const selectedMemberForEdit = ref(null);
 
 const toast = useToast();
+const confirm = useConfirm();
 
 // 사용자 정보 가져오기
 const fetchCurrentUser = async () => {
@@ -227,7 +234,8 @@ const fetchGroups = async () => {
       return {
         id: group.id,
         name: group.name,
-        description: group.description || 'No description',
+        description: group.description || group.memo || 'No description',
+        language: group.language,
         memberCount: memberCount,
         createdAt: new Date(group.created_at),
         status: group.is_active ? 'Active' : 'Inactive'
@@ -260,6 +268,17 @@ const formatDate = (value) => {
     month: "2-digit",
     day: "2-digit"
   });
+};
+
+// 언어 라벨 반환
+const getLanguageLabel = (languageCode) => {
+  const languages = {
+    'ko': '한국어',
+    'en': 'English',
+    'vi': 'Tiếng Việt',
+    'ja': '日本語'
+  };
+  return languages[languageCode] || languageCode;
 };
 
 // 상태 severity 반환
@@ -453,8 +472,61 @@ const editGroup = (group) => {
 
 // 그룹 삭제
 const deleteGroup = (group) => {
-  console.log('Delete group:', group);
-  // TODO: 삭제 확인 다이얼로그 표시
+  confirm.require({
+    message: 'Are you sure you want to delete this group? User information will be deleted together.',
+    header: 'Delete Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    accept: async () => {
+      try {
+        console.log('Deleting group with ID:', group.id);
+
+        // 1. 먼저 그룹에 속한 사용자들을 조회
+        const membersResponse = await getUsersByGroup(group.id);
+        const members = membersResponse.data;
+
+        console.log('Found', members.length, 'members to delete');
+
+        // 2. 그룹에 속한 모든 사용자 삭제
+        for (const member of members) {
+          console.log('Deleting user:', member.id);
+          await deleteUser(member.id);
+        }
+
+        // 3. 그룹 삭제 API 호출
+        await deleteGroupAPI(group.id);
+
+        console.log('Group and all members deleted successfully');
+
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Group deleted successfully',
+          life: 3000
+        });
+
+        // 그룹 목록 새로고침
+        await fetchGroups();
+      } catch (error) {
+        console.error('Failed to delete group:', error);
+        console.error('Error details:', error.response?.data);
+
+        let errorMessage = 'Failed to delete group. Please try again.';
+        if (error.response?.data?.detail) {
+          errorMessage = error.response.data.detail;
+        }
+
+        toast.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 5000
+        });
+      }
+    }
+  });
 };
 
 // 멤버 편집
