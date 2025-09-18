@@ -29,20 +29,12 @@
           <Column field="description" header="Description"></Column>
           <Column field="memberCount" header="Members" sortable>
             <template #body="slotProps">
-              {{ slotProps.data.memberCount }} members
+              {{ slotProps.data.memberCount }}
             </template>
           </Column>
           <Column field="createdAt" header="Created" sortable>
             <template #body="slotProps">
               {{ formatDate(slotProps.data.createdAt) }}
-            </template>
-          </Column>
-          <Column field="status" header="Status" sortable>
-            <template #body="slotProps">
-              <Tag
-                :value="slotProps.data.status"
-                :severity="getStatusSeverity(slotProps.data.status)"
-              />
             </template>
           </Column>
           <Column header="Actions">
@@ -90,7 +82,7 @@
           :paginator="true"
           :rows="10"
           :loading="membersLoading"
-          class="members-table"
+          class="members-table groups-table"
           responsiveLayout="scroll"
           stripedRows
         >
@@ -127,6 +119,8 @@ import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import ColumnGroup from 'primevue/columngroup';
+import Row from 'primevue/row';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import { getAllGroups } from '../../api/groups.js';
@@ -325,12 +319,8 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.groups-view {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+<style scoped lang="scss">
+@import '@/assets/styles/datatable.scss';
 
 .page-header {
   margin-bottom: 2rem;
@@ -343,13 +333,6 @@ onMounted(() => {
   margin: 0;
 }
 
-.groups-content {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -357,7 +340,7 @@ onMounted(() => {
 
 /* 그룹명 클릭 가능 스타일 */
 .clickable-group-name {
-  color: #2563eb;
+  color: #374151;
   cursor: pointer;
   font-weight: 600;
   text-decoration: none;
@@ -365,7 +348,7 @@ onMounted(() => {
 }
 
 .clickable-group-name:hover {
-  color: #1d4ed8;
+  color: #374151;
   text-decoration: underline;
 }
 
@@ -387,26 +370,5 @@ onMounted(() => {
 .back-button:hover {
   background-color: #f3f4f6;
   color: #374151;
-}
-
-/* DataTable 커스텀 스타일 */
-:deep(.p-datatable) {
-  border: none;
-}
-
-:deep(.p-datatable-thead > tr > th) {
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  font-weight: 600;
-  color: #475569;
-}
-
-:deep(.p-datatable-tbody > tr:hover) {
-  background-color: #f8fafc;
-}
-
-:deep(.p-paginator) {
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
 }
 </style>
