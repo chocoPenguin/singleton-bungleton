@@ -136,7 +136,8 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-import { getAllGroups } from '../../api/groups.js';
+import { getAllGroups, getGroupsByAuthor } from '../../api/groups.js';
+import { getAllAuthors } from '../../api/auth.js';
 import { createQuestionSet, startQuestionGeneration, generateQuizWithAI } from '../../api/questions.js';
 import { getCurrentUserFromToken } from '../../utils/auth.js';
 import { getCurrentUser } from '../../api/users.js';
@@ -177,11 +178,27 @@ const isSubmitting = ref(false);
 const fetchGroups = async () => {
   groupsLoading.value = true;
   try {
-    const response = await getAllGroups();
+    let response;
+
+    // 현재 사용자의 그룹만 조회
+    const allAuthorsResponse = await getAllAuthors();
+    const currentUserInfo = getCurrentUserFromToken();
+
+    const currentAuthor = allAuthorsResponse.data.find(author => author.email === currentUserInfo.email);
+
+    if (currentAuthor) {
+      // 현재 author의 그룹만 조회
+      response = await getGroupsByAuthor(currentAuthor.id);
+      console.log('Groups for current author in CreateView:', response.data);
+    } else {
+      console.warn('Current author not found in CreateView, showing all groups');
+      response = await getAllGroups();
+    }
+
     groups.value = response.data.map(group => ({
       id: group.id,
       name: group.name,
-      description: group.description
+      description: group.description || group.memo
     }));
   } catch (error) {
     console.error('Failed to fetch groups:', error);
