@@ -37,29 +37,6 @@ class FeedbackService:
                     "answers_processed": answer
                 }
 
-            # To-Do: 반환 결과 DB 저장 구현해야 함
-
-            # Save the AI generated quiz to database
-#             save_result = self._save_quiz_to_db(
-#                 quiz_data=quiz_data,
-#                 group_id=group_id,
-#                 author_id=author_id,
-#                 resource_id=resource_id,
-#                 num_questions=num_questions,
-#                 language=language,
-#                 difficulty=difficulty,
-#                 description=description,
-#                 users_in_group=users_in_group
-#             )
-#
-#             if not save_result["success"]:
-#                 return save_result
-#
-#             # Commit all changes
-#             self.db.commit()
-#
-#             return save_result
-#
         except Exception as e:
             self.db.rollback()
             return {"success": False, "error": f"Unexpected error: {str(e)}"}

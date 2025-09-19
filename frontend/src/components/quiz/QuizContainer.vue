@@ -9,7 +9,7 @@
     <!-- 문제 표시 -->
     <div v-else-if="questions.length > 0" class="quiz-wrapper">
       <!-- 전체 진행률 표시 -->
-      <div class="progress-section mb-4">
+      <div v-if="props.mode !== 'result'" class="progress-section mb-4">
         <div class="flex justify-content-between align-items-center mb-2">
           <span class="text-sm text-500">{{ Object.keys(answers).length }} / {{ questions.length }}</span>
         </div>
@@ -44,7 +44,7 @@
 
           <!-- 객관식 문제 -->
           <MultipleChoiceQuestion
-            v-if="question.Type === 'M'"
+            v-if="question.type === 'M'"
             :key="`mc-${question.id}`"
             :question="question"
             :choices="question.choices"
@@ -55,7 +55,7 @@
 
           <!-- 단답형 문제 -->
           <SubjectiveQuestion
-            v-else-if="question.Type === 'S'"
+            v-else-if="question.type === 'S'"
             :key="`sub-${question.id}`"
             :question="question"
             :answer-type="'short'"
@@ -66,7 +66,7 @@
 
           <!-- 서술형 문제 -->
           <SubjectiveQuestion
-            v-else-if="question.Type === 'L'"
+            v-else-if="question.type === 'L'"
             :key="`sub-${question.id}`"
             :question="question"
             :answer-type="'long'"
@@ -78,7 +78,7 @@
           <!-- 알 수 없는 타입 -->
           <Card v-else>
             <template #content>
-              <p class="text-center text-500">알 수 없는 문제 타입: {{ question.Type }}</p>
+              <p class="text-center text-500">알 수 없는 문제 타입: {{ question.type }}</p>
             </template>
           </Card>
         </div>
@@ -260,7 +260,7 @@ const fetchQuestions = async () => {
     // 백엔드 데이터를 프론트엔드 형식에 맞게 변환
     questions.value = data.map(q => ({
       id: q.id,
-      Type: q.type, // 백엔드 'type' -> 프론트엔드 'Type'
+      type: q.type, // 백엔드 'type' -> 프론트엔드 'Type'
       question: q.question,
       choices: q.choices,
       max_score: q.max_score,
@@ -280,7 +280,7 @@ const fetchQuestions = async () => {
     questions.value = [
       {
         id: 1,
-        Type: 'M',
+        type: 'M',
         question: 'JavaScript에서 변수를 선언하는 키워드가 아닌 것은?',
         choices: [
           { value: 'A', label: 'var' },
@@ -306,6 +306,7 @@ const fetchQuestions = async () => {
 const handleAnswer = (data) => {
   const question = questions.value.find(q => q.id === data.questionId);
   answers.value[data.questionId] = {
+    type: question?.type,
     user_answer: data.answer,
     question: question?.question,
     max_score: question?.max_score
