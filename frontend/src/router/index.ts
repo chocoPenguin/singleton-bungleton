@@ -29,6 +29,14 @@ const router = createRouter({
       component: Groups,
     },
     {
+      path: '/admin/resources',
+      name: 'admin-resource-management',
+      // route level code-splitting
+      // this generates a separate chunk for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import('../views/admin/ResourceManagement.vue'),
+    },
+    {
       path: '/admin/quiz',
       name: 'admin-quiz-management',
       // route level code-splitting

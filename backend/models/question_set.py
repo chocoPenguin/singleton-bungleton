@@ -18,6 +18,7 @@ class QuestionSet(Base):
     difficulty = Column(String(50), nullable=True)                            # difficulty
     title = Column(String(255), nullable=True)                                # quiz set title
     description = Column(Text, nullable=True)                                 # quiz requirements (instructions)
+    resource_description = Column(Text, nullable=True)                        # resource description at creation time
     expires_at = Column(DateTime, nullable=True)                              # expiration datetime
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -40,6 +41,7 @@ class QuestionSetCreate(BaseModel):
     difficulty: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    resource_description: Optional[str] = None
     expires_at: Optional[datetime] = None
 
 class QuestionSetResponse(BaseModel):
@@ -53,6 +55,7 @@ class QuestionSetResponse(BaseModel):
     difficulty: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    resource_description: Optional[str] = None
     expires_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 

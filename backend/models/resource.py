@@ -11,22 +11,47 @@ class Resource(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    file_path = Column(String(255), nullable=True)  # file path
+    resource_type = Column(String(10), nullable=False)  # SP, LS, GC, S3
+    connection_key = Column(String(500), nullable=False)  # Agent ID, connection string, etc.
+    description = Column(Text, nullable=True)  # For quiz generation prompts
+    file_path = Column(String(255), nullable=True)  # Optional: for local files
     content = Column(Text, nullable=True)           # text resource
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=True)
-    group_id = Column(Integer, index=True, nullable=True)
-    type = Column(String(50), default="file")       # "text" or "file"
+    type = Column(String(50), default="external")   # "external", "file", "text"
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Pydantic models
 class ResourceCreate(BaseModel):
-    group_id: int
-    content: Optional[str] = None  # text based only
+    name: str
+    resource_type: str  # SP, LS, GC, S3
+    connection_key: str
+    description: Optional[str] = None
+    file_path: Optional[str] = None
+    content: Optional[str] = None
+    author_id: Optional[int] = None
+    type: str = "external"
+
+class ResourceUpdate(BaseModel):
+    name: Optional[str] = None
+    resource_type: Optional[str] = None
+    connection_key: Optional[str] = None
+    description: Optional[str] = None
+    file_path: Optional[str] = None
+    content: Optional[str] = None
+    author_id: Optional[int] = None
+    type: Optional[str] = None
 
 class ResourceResponse(BaseModel):
     id: int
-    group_id: int
-    type: str
-    content: Optional[str] = None
+    name: str
+    resource_type: str
+    connection_key: str
+    description: Optional[str] = None
     file_path: Optional[str] = None
+    content: Optional[str] = None
+    author_id: Optional[int] = None
+    type: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

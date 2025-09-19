@@ -45,6 +45,47 @@
           />
         </div>
 
+        <!-- Resource Selection (Optional) -->
+        <div class="form-group">
+          <label for="resource" class="form-label">
+            Select Resource
+            <span class="optional-label">(Optional)</span>
+          </label>
+          <Dropdown
+            id="resource"
+            v-model="form.selectedResource"
+            :options="resources"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Search and select a resource"
+            filter
+            filterPlaceholder="Search resources..."
+            :loading="resourcesLoading"
+            class="form-input"
+            emptyMessage="No resources found"
+            emptyFilterMessage="No resources match your search"
+          >
+            <template #option="slotProps">
+              <div class="resource-option">
+                <div class="resource-name">{{ slotProps.option.name }}</div>
+                <div class="resource-type">
+                  <Tag
+                    :value="getResourceTypeLabel(slotProps.option.resource_type)"
+                    :severity="getResourceTypeSeverity(slotProps.option.resource_type)"
+                    size="small"
+                  />
+                </div>
+                <div v-if="slotProps.option.description" class="resource-description">
+                  {{ truncateDescription(slotProps.option.description) }}
+                </div>
+              </div>
+            </template>
+          </Dropdown>
+          <small class="form-help">
+            Select a resource to provide additional context for question generation
+          </small>
+        </div>
+
         <!-- Questions per Person -->
         <div class="form-group">
           <label for="questionsPerPerson" class="form-label required">
@@ -136,9 +177,11 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 import { getAllGroups, getGroupsByAuthor } from '../../api/groups.js';
 import { getAllAuthors } from '../../api/auth.js';
 import { createQuestionSet, startQuestionGeneration, generateQuizWithAI } from '../../api/questions.js';
+import { getResourcesByAuthor, getResourceTypeLabel } from '../../api/resources.js';
 import { getCurrentUserFromToken } from '../../utils/auth.js';
 import { getCurrentUser } from '../../api/users.js';
 
@@ -149,6 +192,7 @@ const toast = useToast();
 const form = ref({
   title: '',
   selectedGroup: null,
+  selectedResource: null,
   questionsPerPerson: 5,
   language: 'ko',
   difficulty: 'medium',
@@ -171,7 +215,9 @@ const difficulties = ref([
 
 // State
 const groups = ref([]);
+const resources = ref([]);
 const groupsLoading = ref(false);
+const resourcesLoading = ref(false);
 const isSubmitting = ref(false);
 
 // Load groups
@@ -211,6 +257,63 @@ const fetchGroups = async () => {
   } finally {
     groupsLoading.value = false;
   }
+};
+
+// Load resources
+const fetchResources = async () => {
+  resourcesLoading.value = true;
+  try {
+    let response;
+
+    // 현재 사용자의 리소스만 조회
+    const allAuthorsResponse = await getAllAuthors();
+    const currentUserInfo = getCurrentUserFromToken();
+
+    const currentAuthor = allAuthorsResponse.data.find(author => author.email === currentUserInfo.email);
+
+    if (currentAuthor) {
+      // 현재 author의 리소스만 조회
+      response = await getResourcesByAuthor(currentAuthor.id);
+      console.log('Resources for current author in CreateView:', response.data);
+    } else {
+      console.warn('Current author not found in CreateView, no resources loaded');
+      resources.value = [];
+      return;
+    }
+
+    resources.value = response.data.map(resource => ({
+      id: resource.id,
+      name: resource.name,
+      resource_type: resource.resource_type,
+      description: resource.description
+    }));
+  } catch (error) {
+    console.error('Failed to fetch resources:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to load resources. Please try again.',
+      life: 5000
+    });
+  } finally {
+    resourcesLoading.value = false;
+  }
+};
+
+// Resource utility functions
+const getResourceTypeSeverity = (type) => {
+  switch (type) {
+    case 'SP': return 'info';      // SharePoint
+    case 'LS': return 'secondary'; // Local Storage
+    case 'GC': return 'success';   // Google Cloud
+    case 'S3': return 'warning';   // AWS S3
+    default: return 'contrast';
+  }
+};
+
+const truncateDescription = (description) => {
+  if (!description) return '';
+  return description.length > 60 ? description.substring(0, 60) + '...' : description;
 };
 
 // Form validation
@@ -294,8 +397,8 @@ const handleSubmit = async () => {
       language: form.value.language,
       difficulty: form.value.difficulty,
       description: form.value.instructions.trim(),
-      title: generateAutoTitle(), // Add title here
-      resource_id: null // Optional
+      title: generateAutoTitle(),
+      resource_id: form.value.selectedResource || null // Include selected resource
     };
 
     // Generate quiz using AI Foundry Agent
@@ -337,6 +440,7 @@ const handleSubmit = async () => {
 // Initialize component
 onMounted(() => {
   fetchGroups();
+  fetchResources();
 });
 </script>
 
@@ -452,5 +556,26 @@ onMounted(() => {
   width: 100%;
   resize: vertical;
   min-height: 120px;
+}
+
+/* Resource option styles */
+.resource-option {
+  padding: 0.5rem 0;
+}
+
+.resource-name {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.resource-type {
+  margin-bottom: 0.25rem;
+}
+
+.resource-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.3;
 }
 </style>

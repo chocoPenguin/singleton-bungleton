@@ -12,6 +12,26 @@
     <!-- Navigation Menu -->
     <nav class="sidebar-nav">
       <ul class="nav-menu">
+        <!-- Admin Section -->
+        <li class="nav-item">
+          <div class="nav-section-title">Admin</div>
+        </li>
+        <li class="nav-item">
+          <router-link to="/admin/resources" class="nav-link nav-link-indent">
+            <span class="nav-label">Resource Management</span>
+          </router-link>
+        </li>
+
+        <!-- Groups Section -->
+        <li class="nav-item">
+          <div class="nav-section-title">Groups</div>
+        </li>
+        <li class="nav-item">
+          <router-link to="/groups" class="nav-link nav-link-indent">
+            <span class="nav-label">Group Management</span>
+          </router-link>
+        </li>
+
         <!-- Questions Section -->
         <li class="nav-item">
           <div class="nav-section-title">Questions</div>
@@ -24,16 +44,6 @@
         <li class="nav-item">
           <router-link to="/questions/history" class="nav-link nav-link-indent">
             <span class="nav-label">Question History</span>
-          </router-link>
-        </li>
-
-        <!-- Groups Section -->
-        <li class="nav-item">
-          <div class="nav-section-title">Groups</div>
-        </li>
-        <li class="nav-item">
-          <router-link to="/groups" class="nav-link nav-link-indent">
-            <span class="nav-label">Group Management</span>
           </router-link>
         </li>
       </ul>

@@ -51,6 +51,15 @@
                   <i class="pi pi-user"></i>
                   <span>{{ questionSet.author?.name || 'Unknown' }}</span>
                 </div>
+                <div v-if="questionSet.resource" class="detail-item">
+                  <i class="pi pi-database"></i>
+                  <span>{{ questionSet.resource.name }}</span>
+                  <Tag
+                    :value="getResourceTypeLabel(questionSet.resource.resource_type)"
+                    :severity="getResourceTypeSeverity(questionSet.resource.resource_type)"
+                    size="small"
+                  />
+                </div>
               </div>
             </template>
           </Card>
@@ -82,6 +91,20 @@
           <div class="questions-summary">
             <h3>총 {{ questionDetails.length }}개의 문제</h3>
             <p>퀴즈 세트: {{ selectedQuestionSet.title || 'Untitled' }}</p>
+            <div v-if="selectedQuestionSet.resource" class="resource-info">
+              <p class="resource-label">연결된 리소스:</p>
+              <div class="resource-details">
+                <span class="resource-name">{{ selectedQuestionSet.resource.name }}</span>
+                <Tag
+                  :value="getResourceTypeLabel(selectedQuestionSet.resource.resource_type)"
+                  :severity="getResourceTypeSeverity(selectedQuestionSet.resource.resource_type)"
+                  size="small"
+                />
+              </div>
+              <p v-if="selectedQuestionSet.resource_description" class="resource-description">
+                {{ selectedQuestionSet.resource_description }}
+              </p>
+            </div>
           </div>
 
           <Accordion :activeIndex="0" class="custom-accordion">
@@ -150,6 +173,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { getAllQuestionSets, getQuestionSetDetails } from '../../api/questions.js';
+import { getResourceTypeLabel } from '../../api/resources.js';
 
 const toast = useToast();
 
@@ -232,6 +256,16 @@ const getStatusSeverity = (status) => {
     'pending': 'warning'
   };
   return severityMap[status] || 'secondary';
+};
+
+const getResourceTypeSeverity = (type) => {
+  switch (type) {
+    case 'SP': return 'info';      // SharePoint
+    case 'LS': return 'secondary'; // Local Storage
+    case 'GC': return 'success';   // Google Cloud
+    case 'S3': return 'warning';   // AWS S3
+    default: return 'contrast';
+  }
 };
 
 // 궁극의 아코디언 스타일링 솔루션 - MutationObserver 기반
@@ -489,6 +523,39 @@ watch(questionDetails, async () => {
   background: #ffffff;
   border-radius: 0.5rem;
   border: 1px solid #e5e7eb;
+}
+
+.resource-info {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.resource-label {
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.resource-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.resource-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.resource-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 0;
+  font-style: italic;
 }
 
 .question-detail {
