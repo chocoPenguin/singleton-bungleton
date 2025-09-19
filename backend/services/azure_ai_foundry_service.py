@@ -463,7 +463,8 @@ class QuizFeedbackService(BaseAIFoundryService):
 
 **사용자 답변 양식:**
 - 질문 ID별로 구분되며, 각 ID는 다음 정보를 포함합니다:
-  - "answer": 사용자가 입력한 답변
+  - "question_id": 질문 ID
+  - "user_answer": 사용자가 입력한 답변
   - "question": 문제 내용
   - "max_score": 해당 문제의 배점
 
@@ -474,25 +475,23 @@ class QuizFeedbackService(BaseAIFoundryService):
 1. 각 문제에 대해 정확도를 평가하여 0~max_score 사이의 점수를 부여하세요.
 2. 각 답변에 대한 구체적인 피드백을 제공하세요.
 3. 전체적인 평가와 개선사항을 제시하세요.
+4. question의 언어와 동일한 언어로 feedback을 작성해주세요.
 
 **응답 형식 (JSON):**
 응답은 반드시 다음 JSON 형식으로 반환해주세요:
 {{
-  "문제ID": {{
-    "score": 점수,
+  "question_id": {{
+    "user_score": 점수,
+    "user_answer": 사용자가 입력한 답변,
     "feedback": "피드백 내용"
   }},
   "0": {{
-    "total_score": 총점,
-    "overall_feedback": "전체적인 평가 및 개선사항"
+    "user_score": 총점,
+    "feedback": "전체적인 평가 및 개선사항"
   }}
 }}
 
 다른 설명 없이 JSON 객체만 반환해주세요."""
-
-        print(f"[DEBUG] Generated feedback prompt:")
-        print(f"[DEBUG] {prompt}")
-        print(f"[DEBUG] End of prompt")
 
         return prompt
 

@@ -69,6 +69,15 @@ const router = createRouter({
       path: '/quiz/list',
       name: 'Quiz',
       component: Quiz,
+      props: () => ({ mode: 'quiz' }),
+      meta: { key: 'quiz' }
+    },
+    {
+      path: '/quiz/result',
+      name: 'QuizResult',
+      component: Quiz,
+      props: () => ({ mode: 'result' }),
+      meta: { key: 'result' }
     },
   ],
 })

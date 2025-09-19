@@ -14,6 +14,7 @@ class QuestionAssignment(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)     # User
     user_answer = Column(Text, nullable=True)
     user_score = Column(Integer, nullable=True)
+    feedback = Column(Text, nullable=True)
     status = Column(String(20), default="assigned")  # status: assigned, completed, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
