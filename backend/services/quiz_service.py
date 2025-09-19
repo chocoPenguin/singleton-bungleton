@@ -6,6 +6,7 @@ from models.question import Question, QuestionCreate
 from models.question_assignment import QuestionAssignment, QuestionAssignmentCreate
 from models.group import Group
 from models.user import User
+from models.resource import Resource
 from services.azure_ai_foundry_service import AzureAIFoundryService
 import json
 
@@ -21,7 +22,7 @@ class QuizService:
         language: str,
         difficulty: str,
         description: str,
-        title: str, # Add title parameter here
+        title: str,
         author_id: int,
         resource_id: Optional[int] = None
     ) -> Dict[str, Any]:
@@ -33,6 +34,15 @@ class QuizService:
             group = self.db.query(Group).filter(Group.id == group_id).first()
             if not group:
                 return {"success": False, "error": "Group not found"}
+
+            # Get resource information if provided
+            resource = None
+            resource_description = None
+            if resource_id:
+                resource = self.db.query(Resource).filter(Resource.id == resource_id).first()
+                if not resource:
+                    return {"success": False, "error": "Resource not found"}
+                resource_description = resource.description
 
             # Get users in the group
             users_in_group = self.db.query(User).filter(User.group_id == group_id).all()
@@ -49,7 +59,12 @@ class QuizService:
             async with AzureAIFoundryService() as ai_service:
                 # Add scoring instruction to the description
                 scoring_instruction = f"각 문제의 난이도에 따라 점수를 적절히 배분하여 총 {num_questions}문제의 총점이 100점이 되도록 하세요. 각 문제의 점수를 'max_score' 필드에 포함해주세요."
-                updated_description = f"{description}\n\n{scoring_instruction}"
+
+                # Include resource description if available
+                updated_description = description
+                if resource_description:
+                    updated_description = f"{description}\n\nResource Context: {resource_description}"
+                updated_description = f"{updated_description}\n\n{scoring_instruction}"
 
                 quiz_data = await ai_service.generate_quiz(
                     group=group,
@@ -81,7 +96,8 @@ class QuizService:
                 language=language,
                 difficulty=difficulty,
                 description=description,
-                title=title, # Pass title here
+                title=title,
+                resource_description=resource_description,
                 users_in_group=users_in_group
             )
 
@@ -107,7 +123,8 @@ class QuizService:
         language: str,
         difficulty: str,
         description: str,
-        title: str, # Add title parameter here
+        title: str,
+        resource_description: Optional[str],
         users_in_group: List[User]
     ) -> Dict[str, Any]:
         """
@@ -124,7 +141,8 @@ class QuizService:
                 language=language,
                 difficulty=difficulty,
                 description=description,
-                title=title # Use the passed title directly
+                title=title,
+                resource_description=resource_description
             )
 
             db_question_set = QuestionSet(**question_set_data.model_dump())
