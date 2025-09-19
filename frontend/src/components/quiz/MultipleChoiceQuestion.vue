@@ -5,9 +5,12 @@
                 <p class="question-text mb-4">
                     {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
-              <div class="question_max_score">
-                score: {{ question.max_score }}
-              </div>
+                <div v-if="mode === 'result' && question.user_score !== undefined" class="question_max_score">
+                  score: {{ question.user_score}} / {{ question.max_score }}
+                </div>
+                <div v-if="mode !== 'result'" class="question_max_score">
+                  score: {{ question.max_score }}
+                </div>
                 <div class="choices-container">
                     <div 
                         v-for="(choice, index) in choices" 
@@ -19,26 +22,35 @@
                             <RadioButton
                                 :inputId="`choice-${index}`"
                                 :name="questionId"
-                                :value="choice.value"
+                                :value="choice"
                                 v-model="selectedAnswer"
+                                :disabled="mode === 'result'"
                                 @change="handleAnswerChange"
                             />
-                            <label 
-                                :for="`choice-${index}`" 
-                                class="ml-2 cursor-pointer flex-1 p-2 hover:bg-gray-50 border-round transition-colors"
+                            <label
+                                :for="`choice-${index}`"
+                                :class="[
+                                    'ml-2 flex-1 p-2 border-round transition-colors',
+                                    mode === 'result' ? 'cursor-default' : 'cursor-pointer hover:bg-gray-50'
+                                ]"
                             >
-                                {{ choice.label }}
+                                {{ choice }}
                             </label>
                         </div>
                     </div>
                 </div>
+              <!-- 피드백 표시 (result 모드에서만) -->
+              <div v-if="mode === 'result' && question.feedback" style="background-color: #f3f4f6; padding: 1rem; margin: 1rem 0; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <h4 style="color: #374151; font-weight: 600; margin-bottom: 0.5rem; font-size: 1.1rem;">AI Feedback</h4>
+                <p style="color: #4b5563; line-height: 1.6; margin: 0;">{{ question.feedback }}</p>
+              </div>
             </div>
         </template>
     </Card>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Card from 'primevue/card';
 import RadioButton from 'primevue/radiobutton';
 
@@ -55,11 +67,15 @@ const props = defineProps({
     choices: {
         type: Array,
         default: () => [
-            { value: 'A', label: '첫 번째 선택지입니다.' },
-            { value: 'B', label: '두 번째 선택지입니다.' },
-            { value: 'C', label: '세 번째 선택지입니다.' },
-            { value: 'D', label: '네 번째 선택지입니다.' }
+            '첫 번째 선택지입니다.',
+            '두 번째 선택지입니다.',
+            '세 번째 선택지입니다.',
+            '네 번째 선택지입니다.'
         ]
+    },
+    mode: {
+        type: String,
+        default: 'quiz'
     }
 });
 
@@ -76,26 +92,17 @@ const questionId = computed(() => `question-${props.question.id || Date.now()}`)
 const handleAnswerChange = () => {
     emit('answer', {
         questionId: props.question.id,
-        answer: selectedAnswer.value
+        answer: selectedAnswer
     });
 };
 
-const clearAnswer = () => {
-    selectedAnswer.value = '';
-    emit('answer', {
-        questionId: props.question.id,
-        answer: null
-    });
-};
-
-const submitAnswer = () => {
-    if (selectedAnswer.value) {
-        emit('next', {
-            questionId: props.question.id,
-            answer: selectedAnswer.value
-        });
+// result 모드에서 사용자 답변 설정
+onMounted(() => {
+    if (props.mode === 'result' && props.question.user_answer) {
+        selectedAnswer.value = props.question.user_answer;
     }
-};
+});
+
 </script>
 
 <style scoped>

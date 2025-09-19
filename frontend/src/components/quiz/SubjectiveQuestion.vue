@@ -5,28 +5,33 @@
                 <p class="question-text mb-4">
                     {{ question.question || 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!' }}
                 </p>
-                <div class="question_max_score">
+                <div v-if="mode === 'result' && question.user_score !== undefined" class="question_max_score">
+                  score: {{ question.user_score}} / {{ question.max_score }}
+                </div>
+                <div v-if="mode !== 'result'" class="question_max_score">
                   score: {{ question.max_score }}
                 </div>
                 
                 <div class="answer-container mb-4">
                     
                     <!-- 짧은 답변용 InputText -->
-                    <InputText 
+                    <InputText
                         v-if="answerType === 'short'"
                         :id="`answer-${questionId}`"
                         v-model="userAnswer"
                         :placeholder="placeholder"
+                        :disabled="mode === 'result'"
                         fluid
                         @input="handleAnswerChange"
                     />
-                    
+
                     <!-- 긴 답변용 Textarea -->
-                    <Textarea 
+                    <Textarea
                         v-else
                         :id="`answer-${questionId}`"
                         v-model="userAnswer"
                         :placeholder="placeholder"
+                        :disabled="mode === 'result'"
                         fluid
                         :rows="rows"
                         autoResize
@@ -37,13 +42,19 @@
                         {{ userAnswer.length }} / 300 글자
                     </small>
                 </div>
+
+              <!-- 피드백 표시 (result 모드에서만) -->
+              <div v-if="mode === 'result' && question.feedback" style="background-color: #f3f4f6; padding: 1rem; margin: 1rem 0; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <h4 style="color: #374151; font-weight: 600; margin-bottom: 0.5rem; font-size: 1.1rem;">AI Feedback</h4>
+                <p style="color: #4b5563; line-height: 1.6; margin: 0;">{{ question.feedback }}</p>
+              </div>
             </div>
         </template>
     </Card>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -75,6 +86,10 @@ const props = defineProps({
     rows: {
         type: Number,
         default: 4
+    },
+    mode: {
+      type: String,
+      default: 'quiz'
     }
 });
 
@@ -112,6 +127,13 @@ const submitAnswer = () => {
         });
     }
 };
+
+// result 모드에서 사용자 답변 설정
+onMounted(() => {
+    if (props.mode === 'result' && props.question.user_answer) {
+        userAnswer.value = props.question.user_answer;
+    }
+});
 </script>
 
 <style scoped>
