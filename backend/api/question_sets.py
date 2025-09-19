@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from database import SessionLocal
 from models.question_set import QuestionSet, QuestionSetCreate, QuestionSetResponse
+from models.question_assignment import QuestionAssignment
 from services.quiz_service import get_quiz_service
-from pydantic import BaseModel
 from typing import Optional
+from crud.dataverse_sync import send_to_dataverse
+from config import settings
 
 router = APIRouter()
 
@@ -160,6 +163,13 @@ async def generate_quiz(request: QuizGenerateRequest, db: Session = Depends(get_
             author_id=request.author_id,
             resource_id=request.resource_id
         )
+        # Dataverse 동기화 (URL이 설정된 경우에만)
+        if hasattr(settings, 'dataverse_api_url') and settings.dataverse_api_url:
+            try:
+                sync_question_assignments_to_dataverse()
+            except Exception as e:
+                print(f"[WARNING] Dataverse sync failed: {e}")
+                # 동기화 실패해도 quiz 생성은 계속 진행
 
         if not result.get("success", False):
             raise HTTPException(
@@ -210,3 +220,31 @@ def get_quizzes_by_group(group_id: int, db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Error retrieving quizzes: {str(e)}"
         )
+
+
+def sync_question_assignments_to_dataverse():
+    from models.user import User
+
+    db = SessionLocal()
+    try:
+        pairs = db.query(
+            QuestionAssignment.user_id,
+            QuestionAssignment.question_set_id
+        ).distinct().all()
+
+        for user_id, question_set_id in pairs:
+            # 사용자 정보 조회
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                print(f"[WARNING] User {user_id} not found, skipping dataverse sync")
+                continue
+
+            # 링크 생성
+            link = f"http://localhost:5173/quiz/list?user_id={user_id}&question_set_id={question_set_id}"
+
+            print(f"[DEBUG] Syncing user {user_id}: email={user.email}, link={link}")
+
+            # Dataverse에 전송
+            send_to_dataverse(user_id, question_set_id, user.email, link)
+    finally:
+        db.close()
